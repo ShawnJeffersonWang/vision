@@ -37,6 +37,8 @@ func SetupRouter(mode string) *gin.Engine {
 		userGroup.POST("/signup", controller.SignUpHandler)
 		// 用户登录
 		userGroup.POST("/login", controller.LoginHandler)
+		// 刷新 token
+		userGroup.POST("/refresh", controller.RefreshTokenHandler)
 		// 发送邮箱验证码
 		userGroup.POST("/email", controller.VerifyEmailHandler)
 		// 修改密码
@@ -53,6 +55,15 @@ func SetupRouter(mode string) *gin.Engine {
 			userGroup.POST("/avatar", controller.UpdateUserAvatarHandler)
 			// 查询用户主页
 			userGroup.GET("/home-page/:id", controller.GetUserHomePageHandler)
+			// 登录历史
+			userGroup.GET("/login-history", controller.GetLoginHistoryHandler)
+			// 管理员路由
+			adminGroup := userGroup.Group("/admin")
+			adminGroup.Use(middleware.AdminAuthMiddleware())
+			{
+				// 查看任意用户的登录历史
+				adminGroup.GET("/users/:id/login-history", controller.GetUserLoginHistoryHandler)
+			}
 		}
 	}
 

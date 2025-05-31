@@ -22,4 +22,20 @@ const (
 	CodeNoPermission        string = "没有权限"
 	CodeEmptyKeyword        string = "关键词为空"
 	CodeCommunityNameExists string = "社区名称已存在"
+	CodeTokenExpired        string = "token已过期"
+	CodeNeedRefreshToken    string = "需要提供刷新token"
+	CodeUserNotExist        string = "用户不存在"
+)
+
+// Context keys
+const (
+	CtxUserIDKey   = "userID"
+	CtxUsernameKey = "username"
+	CtxUserRoleKey = "userRole"
+)
+
+// User roles
+const (
+	RoleUser  = "user"
+	RoleAdmin = "admin"
 )

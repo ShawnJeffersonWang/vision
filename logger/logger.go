@@ -134,3 +134,68 @@ func GinRecovery(stack bool) gin.HandlerFunc {
 		c.Next()
 	}
 }
+
+// Debug 记录调试日志
+func Debug(msg string, fields ...zap.Field) {
+	lg.Debug(msg, fields...)
+}
+
+// Info 记录信息日志
+func Info(msg string, fields ...zap.Field) {
+	lg.Info(msg, fields...)
+}
+
+// Warn 记录警告日志
+func Warn(msg string, fields ...zap.Field) {
+	lg.Warn(msg, fields...)
+}
+
+// Error 记录错误日志
+func Error(msg string, err error, fields ...zap.Field) {
+	if err != nil {
+		fields = append(fields, zap.Error(err))
+	}
+	lg.Error(msg, fields...)
+}
+
+// Fatal 记录致命错误日志并退出程序
+func Fatal(msg string, fields ...zap.Field) {
+	lg.Fatal(msg, fields...)
+}
+
+// With 创建一个带有预设字段的logger
+func With(fields ...zap.Field) *zap.Logger {
+	return lg.With(fields...)
+}
+
+// Sync 同步日志缓冲
+func Sync() error {
+	return lg.Sync()
+}
+
+// 为了兼容性，也提供一些简单的字符串格式化方法
+
+// Debugf 格式化调试日志
+func Debugf(template string, args ...interface{}) {
+	lg.Sugar().Debugf(template, args...)
+}
+
+// Infof 格式化信息日志
+func Infof(template string, args ...interface{}) {
+	lg.Sugar().Infof(template, args...)
+}
+
+// Warnf 格式化警告日志
+func Warnf(template string, args ...interface{}) {
+	lg.Sugar().Warnf(template, args...)
+}
+
+// Errorf 格式化错误日志
+func Errorf(template string, args ...interface{}) {
+	lg.Sugar().Errorf(template, args...)
+}
+
+// Fatalf 格式化致命错误日志并退出
+func Fatalf(template string, args ...interface{}) {
+	lg.Sugar().Fatalf(template, args...)
+}

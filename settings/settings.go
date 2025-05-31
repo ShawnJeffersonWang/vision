@@ -21,6 +21,7 @@ type AppConfig struct {
 	*RedisConfig  `mapstructure:"redis"`
 	*AiConfig     `mapstructure:"ai"`
 	*AliossConfig `mapstructure:"alioss"`
+	*JWTConfig    `mapstructure:"jwt"` // 新增JWT配置
 }
 
 type MySQLConfig struct {
@@ -67,6 +68,15 @@ type AliossConfig struct {
 	BucketName      string `mapstructure:"bucket_name"`
 	UserAvatarPath  string `mapstructure:"user_avatar_path"`
 	PostImagePtah   string `mapstructure:"post_image_path"`
+}
+
+// JWTConfig JWT配置结构体
+type JWTConfig struct {
+	Secret             string `mapstructure:"secret"`
+	Issuer             string `mapstructure:"issuer"`
+	ExpireHours        int    `mapstructure:"expire_hours"`         // 访问token过期时间（小时）
+	RefreshHours       int    `mapstructure:"refresh_hours"`        // 刷新时间窗口（小时）
+	RefreshExpireHours int    `mapstructure:"refresh_expire_hours"` // 刷新token过期时间（小时）
 }
 
 func LoadConfig() (*MySQLConfig, error) {

@@ -65,6 +65,21 @@ func GetUserInfo(id int64) (*entity.User, error) {
 	return user, err
 }
 
+// GetUserByID 根据ID获取用户信息
+func GetUserByID(userID int64) (*entity.User, error) {
+	var user entity.User
+
+	err := DB.Where("id = ?", userID).First(&user).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, constants.ErrorUserNotExist
+		}
+		return nil, err
+	}
+
+	return &user, nil
+}
+
 // 根据用户ID获取用户简略信息
 func GetUserBriefInfo(id int64) (*response.UserBriefResponse, error) {
 	userBriefResponse := new(response.UserBriefResponse)

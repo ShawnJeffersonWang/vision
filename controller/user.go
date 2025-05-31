@@ -62,34 +62,163 @@ func SignUpHandler(c *gin.Context) {
 
 // 用户登录
 func LoginHandler(c *gin.Context) {
-	//1.获取请求参数以及参数校验
+	// 1.获取请求参数以及参数校验
 	p := new(request.LoginRequest)
 	if err := c.ShouldBindJSON(p); err != nil {
-		//请求参数有误，直接返回响应
+		// 请求参数有误，直接返回响应
 		zap.L().Error("参数校验失败", zap.Error(err))
 		ResponseError(c, http.StatusBadRequest, constants.CodeInvalidParam)
 		return
 	}
 
-	//2.业务逻辑处理
-	token, err := logic.Login(p)
+	// 获取客户端信息
+	p.ClientIP = c.ClientIP()
+	p.UserAgent = c.GetHeader("User-Agent")
+	p.DeviceID = c.GetHeader("X-Device-ID")
+	if p.DeviceID == "" {
+		p.DeviceID = "web" // 默认设备类型
+	}
+	p.DeviceInfo = c.GetHeader("User-Agent")
+
+	// 2.业务逻辑处理
+	tokenResp, err := logic.Login(p)
 	if err != nil {
-		zap.L().Error("登录失败", zap.String("name", p.Email), zap.Error(err))
-		if errors.Is(err, constants.ErrorEmailNotExist) { //如果是邮箱未注册错误
+		zap.L().Error("登录失败",
+			zap.String("email", p.Email),
+			zap.String("device_id", p.DeviceID),
+			zap.Error(err))
+
+		if errors.Is(err, constants.ErrorEmailNotExist) { // 如果是邮箱未注册错误
 			ResponseError(c, http.StatusBadRequest, constants.CodeEmailNotExist)
 			return
-		} else if errors.Is(err, constants.ErrorInvalidPassword) { //如果是密码不正确错误
+		} else if errors.Is(err, constants.ErrorInvalidPassword) { // 如果是密码不正确错误
 			ResponseError(c, http.StatusUnauthorized, constants.CodeInvalidPassword)
 			return
-		} else { //否则返回服务端繁忙错误
+		} else { // 否则返回服务端繁忙错误
 			ResponseError(c, http.StatusInternalServerError, constants.CodeServerBusy)
 			return
 		}
 	}
 
-	//3.登陆成功，直接将token返回给用户
-	ResponseSuccess(c, token)
-	return
+	// 3.登陆成功，返回token信息
+	ResponseSuccess(c, tokenResp)
+}
+
+// GetLoginHistoryHandler 获取登录历史
+func GetLoginHistoryHandler(c *gin.Context) {
+	// 1. 获取当前用户ID
+	userID, err := getCurrentUserID(c)
+	if err != nil {
+		ResponseError(c, http.StatusUnauthorized, constants.CodeNeedLogin)
+		return
+	}
+
+	// 2. 获取请求参数
+	req := new(request.GetLoginHistoryRequest)
+	if err := c.ShouldBindQuery(req); err != nil {
+		zap.L().Error("参数校验失败", zap.Error(err))
+		ResponseError(c, http.StatusBadRequest, constants.CodeInvalidParam)
+		return
+	}
+
+	// 3. 业务逻辑处理
+	resp, err := logic.GetMyLoginHistory(userID, req)
+	if err != nil {
+		zap.L().Error("获取登录历史失败",
+			zap.Int64("user_id", userID),
+			zap.Error(err))
+		ResponseError(c, http.StatusInternalServerError, constants.CodeServerBusy)
+		return
+	}
+
+	// 4. 返回响应
+	ResponseSuccess(c, resp)
+}
+
+// GetUserLoginHistoryHandler 管理员获取指定用户的登录历史
+func GetUserLoginHistoryHandler(c *gin.Context) {
+	// 1. 获取用户ID参数
+	userIDStr := c.Param("id")
+	userID, err := strconv.ParseInt(userIDStr, 10, 64)
+	if err != nil {
+		ResponseError(c, http.StatusBadRequest, constants.CodeInvalidParam)
+		return
+	}
+
+	// 2. 获取请求参数
+	req := new(request.GetLoginHistoryRequest)
+	if err := c.ShouldBindQuery(req); err != nil {
+		zap.L().Error("参数校验失败", zap.Error(err))
+		ResponseError(c, http.StatusBadRequest, constants.CodeInvalidParam)
+		return
+	}
+
+	// 3. 业务逻辑处理（权限已由AdminAuthMiddleware检查）
+	resp, err := logic.GetLoginHistory(userID, req.Page, req.PageSize)
+	if err != nil {
+		zap.L().Error("获取用户登录历史失败",
+			zap.Int64("user_id", userID),
+			zap.Error(err))
+		ResponseError(c, http.StatusInternalServerError, constants.CodeServerBusy)
+		return
+	}
+
+	// 4. 返回响应
+	ResponseSuccess(c, resp)
+}
+
+// getCurrentUserID 从context中获取当前用户ID
+func getCurrentUserID(c *gin.Context) (int64, error) {
+	userID, exists := c.Get(constants.CtxUserIDKey)
+	if !exists {
+		return 0, errors.New("user not found")
+	}
+
+	uid, ok := userID.(int64)
+	if !ok {
+		return 0, errors.New("invalid user id")
+	}
+
+	return uid, nil
+}
+
+// 刷新Token
+func RefreshTokenHandler(c *gin.Context) {
+	// 1.获取刷新token
+	refreshToken := c.GetHeader("Refresh-Token")
+	if refreshToken == "" {
+		zap.L().Error("刷新token缺失")
+		ResponseError(c, http.StatusBadRequest, constants.CodeNeedRefreshToken)
+		return
+	}
+
+	// 获取设备信息
+	deviceID := c.GetHeader("X-Device-ID")
+	if deviceID == "" {
+		deviceID = "web"
+	}
+
+	// 2.业务逻辑处理
+	tokenResp, err := logic.RefreshToken(refreshToken, deviceID)
+	if err != nil {
+		zap.L().Error("刷新token失败",
+			zap.String("device_id", deviceID),
+			zap.Error(err))
+
+		if errors.Is(err, constants.ErrorInvalidToken) {
+			ResponseError(c, http.StatusUnauthorized, constants.CodeInvalidToken)
+			return
+		} else if errors.Is(err, constants.ErrorTokenExpired) {
+			ResponseError(c, http.StatusUnauthorized, constants.CodeTokenExpired)
+			return
+		} else {
+			ResponseError(c, http.StatusInternalServerError, constants.CodeServerBusy)
+			return
+		}
+	}
+
+	// 3.刷新成功，返回新的token信息
+	ResponseSuccess(c, tokenResp)
 }
 
 // 发送邮箱验证码
