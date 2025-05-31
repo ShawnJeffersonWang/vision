@@ -3,6 +3,7 @@ package redis
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/go-redis/redis"
@@ -36,6 +37,47 @@ func Init(cfg *settings.RedisConfig) (err error) {
 
 func Close() {
 	_ = client.Close()
+}
+
+// Ping 检查 Redis 连接
+func Ping() error {
+	if client == nil {
+		return fmt.Errorf("redis client not initialized")
+	}
+
+	_, err := client.Ping().Result()
+	return err
+}
+
+// GetClient 获取 Redis 客户端（如果需要直接访问）
+func GetClient() *redis.Client {
+	return client
+}
+
+// GetInfo 获取 Redis 信息
+func GetInfo() (map[string]string, error) {
+	if client == nil {
+		return nil, fmt.Errorf("redis client not initialized")
+	}
+
+	info, err := client.Info().Result()
+	if err != nil {
+		return nil, err
+	}
+
+	// 简单解析 INFO 输出
+	result := make(map[string]string)
+	lines := strings.Split(info, "\n")
+	for _, line := range lines {
+		if strings.Contains(line, ":") {
+			parts := strings.SplitN(line, ":", 2)
+			if len(parts) == 2 {
+				result[strings.TrimSpace(parts[0])] = strings.TrimSpace(parts[1])
+			}
+		}
+	}
+
+	return result, nil
 }
 
 // ========== 通用操作 ==========

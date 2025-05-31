@@ -1,6 +1,7 @@
 package mysql
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -70,4 +71,41 @@ func Close() {
 			_ = sqlDB.Close()
 		}
 	}
+}
+
+// Ping 检查数据库连接
+func Ping(ctx context.Context) error {
+	if DB == nil {
+		return fmt.Errorf("database not initialized")
+	}
+
+	sqlDB, err := DB.DB()
+	if err != nil {
+		return fmt.Errorf("failed to get sql.DB: %w", err)
+	}
+
+	return sqlDB.PingContext(ctx)
+}
+
+// GetStats 获取数据库连接池统计信息
+func GetStats() (map[string]interface{}, error) {
+	if DB == nil {
+		return nil, fmt.Errorf("database not initialized")
+	}
+
+	sqlDB, err := DB.DB()
+	if err != nil {
+		return nil, err
+	}
+
+	stats := sqlDB.Stats()
+	return map[string]interface{}{
+		"open_connections":    stats.OpenConnections,
+		"in_use":              stats.InUse,
+		"idle":                stats.Idle,
+		"wait_count":          stats.WaitCount,
+		"wait_duration":       stats.WaitDuration.String(),
+		"max_idle_closed":     stats.MaxIdleClosed,
+		"max_lifetime_closed": stats.MaxLifetimeClosed,
+	}, nil
 }

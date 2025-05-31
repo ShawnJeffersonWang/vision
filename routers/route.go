@@ -1,10 +1,9 @@
 package routers
 
 import (
-	"net/http"
-
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"net/http"
 
 	"agricultural_vision/controller"
 	"agricultural_vision/logger"
@@ -29,6 +28,11 @@ func SetupRouter(mode string) *gin.Engine {
 		// 允许携带认证信息
 		AllowCredentials: true,
 	}))
+
+	// 在 routers/routes.go 中添加（在其他路由之前）
+	r.GET("/health", controller.HealthCheckHandler)
+	// 添加实例ID中间件
+	r.Use(middleware.InstanceIDMiddleware())
 
 	// 用户模块
 	userGroup := r.Group("/user")
