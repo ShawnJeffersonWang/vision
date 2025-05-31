@@ -25,10 +25,10 @@ type AppConfig struct {
 
 type MySQLConfig struct {
 	Host         string `mapstructure:"host"`
+	Port         int    `mapstructure:"port"`
 	User         string `mapstructure:"user"`
 	Password     string `mapstructure:"password"`
 	DB           string `mapstructure:"db"`
-	Port         int    `mapstructure:"port"`
 	MaxOpenConns int    `mapstructure:"max_open_conns"`
 	MaxIdleConns int    `mapstructure:"max_idle_conns"`
 }
@@ -67,6 +67,18 @@ type AliossConfig struct {
 	BucketName      string `mapstructure:"bucket_name"`
 	UserAvatarPath  string `mapstructure:"user_avatar_path"`
 	PostImagePtah   string `mapstructure:"post_image_path"`
+}
+
+func LoadConfig() (*MySQLConfig, error) {
+	viper.SetConfigFile("./conf/config.yaml")
+	if err := viper.ReadInConfig(); err != nil {
+		return nil, err
+	}
+	var config MySQLConfig
+	if err := viper.Sub("mysql").Unmarshal(&config); err != nil {
+		return nil, err
+	}
+	return &config, nil
 }
 
 func Init() error {
