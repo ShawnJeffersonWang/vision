@@ -19,7 +19,7 @@ var (
 
 // 生成6位随机验证码
 func generateVerificationCode() string {
-	rand.Seed(time.Now().UnixNano())
+	rand.New(rand.NewSource(time.Now().UnixNano()))
 	return fmt.Sprintf("%06d", rand.Intn(1000000))
 }
 
