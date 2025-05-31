@@ -92,13 +92,13 @@ func SetupRouter(mode string) *gin.Engine {
 		// 查询社区详情
 		communityPost.GET("/community/:id", controller.CommunityDetailHandler)
 
-		/*需要登录的接口*/
-		authCommunityPost := communityPost.Group("/")
+		/*需要登录的接口 应该在定义需要认证的路由组时就应用中间件，而不是在定义路由之后*/
+		authCommunityPost := communityPost.Group("/", middleware.JWTAuthMiddleware())
 		{
-
 			// 使用jwt校验
-			authCommunityPost.Use(middleware.JWTAuthMiddleware())
-
+			//authCommunityPost.Use(middleware.JWTAuthMiddleware())
+			// 创建社区
+			authCommunityPost.POST("/community", controller.CreateCommunityHandler)
 			// 查询帖子列表（指定排序方式）（用户登录）
 			authCommunityPost.GET("/posts", controller.GetPostListHandler)
 			// 查询帖子列表（指定社区）（指定排序方式，默认按时间倒序）（用户登录）

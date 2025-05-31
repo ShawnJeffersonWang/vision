@@ -10,6 +10,26 @@ import (
 	"agricultural_vision/models/response"
 )
 
+// CreateCommunity 创建社区
+func CreateCommunity(community *entity.Community) error {
+	result := DB.Create(community)
+	return result.Error
+}
+
+// CheckCommunityNameExists 检查社区名称是否已存在
+func CheckCommunityNameExists(name string) (bool, error) {
+	var count int64
+	result := DB.Model(&entity.Community{}).
+		Where("community_name = ?", name).
+		Count(&count)
+
+	if result.Error != nil {
+		return false, result.Error
+	}
+
+	return count > 0, nil
+}
+
 // 查询社区列表
 func GetCommunityList() ([]*response.CommunityBriefResponse, error) {
 	var communities []*response.CommunityBriefResponse
