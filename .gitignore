@@ -1,5 +1,8 @@
 .idea
 conf
-log
 tmp
 init.sql
+.env
+secrets/
+log/
+*.log

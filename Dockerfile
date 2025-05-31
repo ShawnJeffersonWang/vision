@@ -1,4 +1,7 @@
-FROM golang:alpine AS builder
+FROM golang:1.24-alpine AS builder
+
+# 查看Go版本
+RUN go version
 
 # 为我们的镜像设置必要的环境变量
 ENV GO111MODULE=on \
@@ -11,38 +14,52 @@ ENV GO111MODULE=on \
 WORKDIR /build
 
 # 复制项目中的 go.mod 和 go.sum文件并下载依赖信息
-COPY go.mod .
-COPY go.sum .
+COPY go.mod go.sum ./
 RUN go mod download
 
 # 将代码复制到容器中
 COPY . .
 
-# 将我们的代码编译成二进制可执行文件
-RUN go build -o agricultural_vision .
+# 将我们的代码编译成二进制可执行文件，添加优化参数
+#RUN go build -o agricultural_vision .
+RUN go build -ldflags="-w -s" -o agricultural_vision .
 
 ###################
 # 接下来创建一个小镜像
 ###################
-FROM debian:bookworm-slim
+#FROM debian:bookworm-slim
+FROM alpine:3.22
 
 # 设置工作目录
 WORKDIR /app
 
 # 复制脚本和配置文件到工作目录
-COPY ./wait-for.sh /app/wait-for.sh
-COPY ./conf /app/conf
+COPY ./wait-for.sh ./wait-for.sh
+COPY ./conf ./conf
 
 # 从builder镜像中把可执行文件拷贝到当前工作目录
-COPY --from=builder /build/agricultural_vision /app/
+COPY --from=builder /build/agricultural_vision ./
 
-# 更新包列表，安装 netcat-openbsd，设置脚本权限
-RUN set -eux \
-    && apt-get update \
-    && apt-get install -y --no-install-recommends netcat-openbsd \
-    && chmod 755 /app/wait-for.sh \
-    && ls -l /app/wait-for.sh
+# 更新包列表，安装 netcat-openbsd 和 ca-certificates，设置脚本权限
+#RUN set -eux \
+#    && apt-get update \
+#    && apt-get install -y --no-install-recommends netcat-openbsd ca-certificates \
+#    && update-ca-certificates \
+#    && chmod 755 /app/wait-for.sh \
+#    && ls -l /app/wait-for.sh \
+#    && rm -rf /var/lib/apt/lists/*
+
+# 安装必要的运行时依赖，包括CA证书
+RUN apk --no-cache add \
+    ca-certificates \
+    netcat-openbsd \
+    tzdata \
+    && update-ca-certificates
+
+# 健康检查
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD nc -z localhost 8080 || exit 1
 
 # 设置入口点
-ENTRYPOINT ["/app/agricultural_vision"]
+ENTRYPOINT ["./agricultural_vision"]
 CMD ["conf/config.yaml"]

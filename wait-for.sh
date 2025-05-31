@@ -23,6 +23,7 @@ USAGE
 
 wait_for() {
   results=()
+  # shellcheck disable=SC2068
   for addr in ${ADDRS[@]}
   do
     HOST=$(printf "%s\n" "$addr"| cut -d : -f 1)
@@ -40,6 +41,7 @@ wait_for() {
     results=(${results[@]} $result)
   done
   num=${#results[@]}
+  # shellcheck disable=SC2068
   for result in ${results[@]}
   do
     if [ $result -eq 0 ] ; then
