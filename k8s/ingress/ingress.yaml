@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: agricultural-vision-ingress
+  namespace: agricultural-vision  # 确保与 Service 同命名空间
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    # 新增 Ingress Controller 类注解（若有多个 Controller 时需明确）
+    kubernetes.io/ingress.class: "nginx"
+spec:
+  ingressClassName: "nginx"  # 与 Ingress Controller 的配置一致
+  rules:
+    - host: your-domain.com  # 替换为实际域名
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: agricultural-vision-service  # 确保 Service 名称正确
+                port:
+                  number: 8080  # Service 的 port 字段（非 targetPort）

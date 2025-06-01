@@ -1,25 +1,46 @@
 apiVersion: v1
-kind: PersistentVolumeClaim
+kind: Service
 metadata:
-  name: mysql-pvc
+  name: mysql-headless
   namespace: agricultural-vision
+  labels:
+    app: mysql
 spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 10Gi
-  # 如果有特定的StorageClass，可以指定
-  # storageClassName: your-storage-class
+  type: ClusterIP
+  clusterIP: None  # 无头服务，用于稳定的Pod网络标识
+  selector:
+    app: mysql
+  ports:
+    - name: mysql
+      port: 3306
+      targetPort: 3306
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-service
+  namespace: agricultural-vision
+  labels:
+    app: mysql
+spec:
+  type: ClusterIP
+  selector:
+    app: mysql
+  ports:
+    - name: mysql
+      port: 3306
+      targetPort: 3306
 
 ---
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: mysql
   namespace: agricultural-vision
 spec:
-  replicas: 1
+  serviceName: "mysql-headless"  # 关联无头服务
+  replicas: 2  # 初始为2个副本，可扩展
   selector:
     matchLabels:
       app: mysql
@@ -33,6 +54,7 @@ spec:
           image: mysql:8.0
           ports:
             - containerPort: 3306
+              name: mysql
           env:
             - name: MYSQL_ROOT_PASSWORD
               valueFrom:
@@ -48,7 +70,7 @@ spec:
             - --default-authentication-plugin=mysql_native_password
             - --bind-address=0.0.0.0
           volumeMounts:
-            - name: mysql-storage
+            - name: mysql-data
               mountPath: /var/lib/mysql
             - name: mysql-init
               mountPath: /docker-entrypoint-initdb.d
@@ -77,26 +99,19 @@ spec:
             initialDelaySeconds: 5
             periodSeconds: 5
       volumes:
-        - name: mysql-storage
-          persistentVolumeClaim:
-            claimName: mysql-pvc
         - name: mysql-init
           configMap:
             name: mysql-init-script
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: mysql-service
-  namespace: agricultural-vision
-spec:
-  selector:
-    app: mysql
-  ports:
-    - port: 3306
-      targetPort: 3306
-  type: ClusterIP
+  volumeClaimTemplates:  # 自动创建PVC
+    - metadata:
+        name: mysql-data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 10Gi
+        storageClassName: standard
 
 ---
 apiVersion: v1

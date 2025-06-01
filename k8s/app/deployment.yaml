@@ -104,7 +104,7 @@ spec:
             failureThreshold: 3
           volumeMounts:
             - name: config
-              mountPath: /conf
+              mountPath: /app/conf
               readOnly: true
           command: ["./agricultural_vision"]
       volumes:
@@ -126,7 +126,8 @@ spec:
       targetPort: 8080
       protocol: TCP
       name: http
-  type: ClusterIP
+#      nodePort: 30080  # 指定NodePort端口，可选（不指定则自动分配）
+  type: ClusterIP  # 修改类型为NodePort
 
 ---
 apiVersion: autoscaling/v2
@@ -184,13 +185,18 @@ spec:
     - from:
         - podSelector:
             matchLabels:
-              app: nginx
+              # 允许Ingress Controller的Pod访问（根据实际标签修改）
+              app.kubernetes.io/name: nginx-ingress-controller  # 示例为NGINX Ingress
         - podSelector:
             matchLabels:
-              app: envoy
+              app: mysql  # 保留原有依赖
+        - podSelector:
+            matchLabels:
+              app: redis
       ports:
         - protocol: TCP
           port: 8080
+  # egress部分保持不变
   egress:
     - to:
         - podSelector:
@@ -210,8 +216,8 @@ spec:
         - namespaceSelector: {}
       ports:
         - protocol: TCP
-          port: 443  # 允许访问外部HTTPS服务（如AI API）
+          port: 443
         - protocol: TCP
-          port: 53   # DNS
+          port: 53
         - protocol: UDP
-          port: 53   # DNS
+          port: 53

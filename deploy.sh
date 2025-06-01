@@ -10,7 +10,7 @@ eval $(minikube docker-env)
 echo "Building application image..."
 docker build -t agricultural-vision:latest .
 
-echo "Load image to minikube"
+echo "Load image to minikube..."
 minikube image load agricultural-vision:latest
 
 # 创建命名空间
