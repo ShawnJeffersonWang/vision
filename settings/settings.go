@@ -2,8 +2,6 @@ package settings
 
 import (
 	"fmt"
-	"strings"
-
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
 )
@@ -96,8 +94,6 @@ func Init() error {
 	viper.SetConfigFile("./conf/config.yaml")
 	// 启用环境变量支持
 	viper.AutomaticEnv()
-	// 替换 mapstructure 标签中的点号为环境变量中的下划线
-	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
 	// 绑定环境变量到嵌套字段
 	viper.BindEnv("mysql.password", "MYSQL_PASSWORD")

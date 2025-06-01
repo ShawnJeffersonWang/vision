@@ -1,3 +1,18 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-pvc
+  namespace: agricultural-vision
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  # 如果有特定的StorageClass，可以指定
+  # storageClassName: your-storage-class
+
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -23,7 +38,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: app-secrets
-                  key: password
+                  key: mysql-password
             - name: MYSQL_DATABASE
               value: agricultural_vision
             - name: MYSQL_ROOT_HOST
@@ -46,7 +61,7 @@ spec:
                 - localhost
                 - -u
                 - root
-                - -p325523
+                - -p$(MYSQL_ROOT_PASSWORD)
             initialDelaySeconds: 30
             periodSeconds: 10
           readinessProbe:
@@ -58,20 +73,22 @@ spec:
                 - localhost
                 - -u
                 - root
-                - -p325523
+                - -p$(MYSQL_ROOT_PASSWORD)
             initialDelaySeconds: 5
             periodSeconds: 5
       volumes:
         - name: mysql-storage
-          emptyDir: {}  # 在生产环境中应使用 PersistentVolume
+          persistentVolumeClaim:
+            claimName: mysql-pvc
         - name: mysql-init
           configMap:
             name: mysql-init-script
+
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: mysql
+  name: mysql-service
   namespace: agricultural-vision
 spec:
   selector:
@@ -89,10 +106,17 @@ metadata:
   namespace: agricultural-vision
 data:
   init.sql: |
-    -- 你的 init.sql 内容
+    -- 创建数据库（如果不存在）
     CREATE DATABASE IF NOT EXISTS agricultural_vision;
+    
+    -- 使用数据库
     USE agricultural_vision;
     
-    -- 在这里添加你的表结构和初始数据
-    -- 例如：
-    -- CREATE TABLE IF NOT EXISTS users (...);
+    -- 创建允许从任何主机连接的root用户
+    CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY '325523';
+    
+    -- 授予所有权限
+    GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION;
+    
+    -- 刷新权限
+    FLUSH PRIVILEGES;

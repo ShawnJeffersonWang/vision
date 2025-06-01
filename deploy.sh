@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 启动 minikube（如果还没启动）
-minikube status || minikube start --memory=4096 --cpus=2
+minikube status || minikube start
 
 # 设置 Docker 环境以使用 minikube 的 Docker daemon
 eval $(minikube docker-env)
