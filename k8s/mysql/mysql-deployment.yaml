@@ -22,8 +22,8 @@ spec:
             - name: MYSQL_ROOT_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: mysql-secret
-                  key: mysql-root-password
+                  name: app-secrets
+                  key: password
             - name: MYSQL_DATABASE
               value: agricultural_vision
             - name: MYSQL_ROOT_HOST
@@ -71,7 +71,8 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: mysql-service
+  name: mysql
+  namespace: agricultural-vision
 spec:
   selector:
     app: mysql
@@ -79,3 +80,19 @@ spec:
     - port: 3306
       targetPort: 3306
   type: ClusterIP
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-init-script
+  namespace: agricultural-vision
+data:
+  init.sql: |
+    -- 你的 init.sql 内容
+    CREATE DATABASE IF NOT EXISTS agricultural_vision;
+    USE agricultural_vision;
+    
+    -- 在这里添加你的表结构和初始数据
+    -- 例如：
+    -- CREATE TABLE IF NOT EXISTS users (...);

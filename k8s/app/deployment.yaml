@@ -6,7 +6,7 @@ metadata:
   labels:
     app: agricultural-vision
 spec:
-  replicas: 3
+  replicas: 11
   selector:
     matchLabels:
       app: agricultural-vision
@@ -56,6 +56,31 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: status.podIP
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: jwt-secret
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: mysql-password
+            - name: AI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: ai-api-key
+            - name: OSS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: oss-access-key-id
+            - name: OSS_ACCESS_KEY_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: oss-access-key-secret
           resources:
             requests:
               memory: "128Mi"
@@ -87,3 +112,165 @@ spec:
         - name: config
           configMap:
             name: agricultural-vision-config
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: agricultural-vision-service
+  namespace: default
+spec:
+  selector:
+    app: agricultural-vision
+  ports:
+    - port: 8080
+      targetPort: 8080
+      protocol: TCP
+      name: http
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: agricultural-vision-config
+  namespace: default
+data:
+  config.yaml: |
+    name: "agricultural vision"
+    mode: "release"
+    port: 8080
+    version: "v0.0.1"
+    start_time: "2025-01-14"
+    machine_id: 1
+    
+    # JWT配置
+    jwt:
+      issuer: "shawn"
+      access_expire_hours: 168 # 7天
+      refresh_expire_hours: 8760 # 365天
+    
+    log:
+      level: "info"
+      filename: "/var/log/agricultural_vision.log"
+      max_size: 1000
+      max_age: 3600
+      max_backups: 5
+    
+    mysql:
+      host: "mysql"
+      port: 3306
+      user: "root"
+      db: "agricultural_vision"
+      max_open_conns: 100
+      max_idle_conns: 20
+    
+    redis:
+      host: "redis"
+      password: ""
+      port: 6379
+      db: 0
+      pool_size: 100
+      min_idle_conns: 50
+    
+    ai:
+      system_content1: "你是一位古代农学大家，精通《齐民要术》和古代农业理论，传达古代智慧与现代启示。语言风格：文辞古雅、严谨中带有亲切感。在描述古籍内容时，适当引用经典原文（需节选而非全文展示）或进行现代解读。"
+      system_content2: "你是一个农业全景知识库，提供从农业起源、历史演变到现代智慧农业的全面解读。语言风格：逻辑清晰、结构严谨，兼顾专业性和普及性。能够根据提问调整深度：基础知识普及时通俗易懂，专业讨论时数据充分、论据详实。"
+      system_content3: "你专注于中国传统二十四节气及其在农耕文化中的地位，传递时间与自然、农事之间的密切关系。语言风格：语言生动、富有诗意，既传递知识又激发情感共鸣。描述时注重细节，能让用户感受到传统文化的魅力与韵味。"
+      system_content4: "你聚焦各地农业风貌和地方农作物的特色，展示区域性农业文化与经济形态。语言风格：细腻、地域色彩浓厚，兼顾历史叙述与现实解读。"
+      api_url: "https://open.bigmodel.cn/api/paas/v4/chat/completions"
+      model: "charglm-4"
+    
+    alioss:
+      endpoint: "oss-cn-beijing.aliyuncs.com"
+      bucket_name: "agricultural-vision"
+      user_avatar_path: "user_avatar/"
+      post_image_path: "post_image/"
+
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: agricultural-vision-hpa
+  namespace: default
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: agricultural-vision
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: agricultural-vision-pdb
+  namespace: default
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: agricultural-vision
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: agricultural-vision-network-policy
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      app: agricultural-vision
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: nginx
+        - podSelector:
+            matchLabels:
+              app: envoy
+      ports:
+        - protocol: TCP
+          port: 8080
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: mysql
+      ports:
+        - protocol: TCP
+          port: 3306
+    - to:
+        - podSelector:
+            matchLabels:
+              app: redis
+      ports:
+        - protocol: TCP
+          port: 6379
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: TCP
+          port: 443  # 允许访问外部HTTPS服务（如AI API）
+        - protocol: TCP
+          port: 53   # DNS
+        - protocol: UDP
+          port: 53   # DNS
