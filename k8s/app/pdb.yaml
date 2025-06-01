@@ -1,0 +1,10 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: agricultural-vision-pdb
+  namespace: agricultural-vision
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: agricultural-vision

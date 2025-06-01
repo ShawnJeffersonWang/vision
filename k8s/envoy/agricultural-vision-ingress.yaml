@@ -1,0 +1,32 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: agricultural-vision-ingress
+  namespace: agricultural-vision
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+spec:
+  ingressClassName: nginx  # 如果使用 traefik，改为 "traefik"
+  rules:
+    # 使用域名访问
+    - host: agricultural-vision.example.com  # 替换为你的域名
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: envoy-service
+                port:
+                  number: 80
+    # 不使用域名，通过 IP 访问（可选）
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: envoy-service
+                port:
+                  number: 80

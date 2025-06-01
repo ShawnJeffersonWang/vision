@@ -6,3 +6,4 @@ init.sql
 secrets/
 log/
 *.log
+k8s/base/secret.yaml
