@@ -87,8 +87,7 @@ type AliossConfig struct {
 type JWTConfig struct {
 	Secret             string `mapstructure:"secret"`
 	Issuer             string `mapstructure:"issuer"`
-	ExpireHours        int    `mapstructure:"expire_hours"`         // 访问token过期时间（小时）
-	RefreshHours       int    `mapstructure:"refresh_hours"`        // 刷新时间窗口（小时）
+	AccessExpireHours  int    `mapstructure:"access_expire_hours"`  // 访问token过期时间（小时）
 	RefreshExpireHours int    `mapstructure:"refresh_expire_hours"` // 刷新token过期时间（小时）
 }
 

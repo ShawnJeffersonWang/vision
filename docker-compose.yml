@@ -40,41 +40,49 @@ services:
       - app-network
 
   # Nginx 负载均衡器
-#  nginx:
-#    image: nginx:alpine
-#    ports:
-#      - "80:80"
-#      - "443:443"  # 如果需要 HTTPS
-#    volumes:
-#      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-#      - ./nginx/conf.d:/etc/nginx/conf.d:ro
-#    depends_on:
-#      - agricultural_vision_1
-#      - agricultural_vision_2
-#      - agricultural_vision_3
-#    networks:
-#      - app-network
-
-  # ---------------------------
-  # Envoy 代理（API 网关）
-  # ---------------------------
-  envoy:
-    image: envoyproxy/envoy:v1.33-latest
+  nginx:
+    image: nginx:alpine
     ports:
-      - "80:10000"     # HTTP 端口
-      - "9901:9901"    # Envoy 管理界面
+      - "80:80"
+      - "443:443"  # 如果需要 HTTPS
     volumes:
-      - ./envoy/envoy.yaml:/etc/envoy/envoy.yaml:ro
-    command: /usr/local/bin/envoy -c /etc/envoy/envoy.yaml
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
     depends_on:
       - agricultural_vision_1
       - agricultural_vision_2
       - agricultural_vision_3
-    restart: unless-stopped
     networks:
       - app-network
     environment:
       - TZ=Asia/Shanghai  # 设置时区
+    healthcheck:
+      test: ["CMD-SHELL", "nginx -t || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # ---------------------------
+  # Envoy 代理（API 网关）
+  # ---------------------------
+#  envoy:
+#    image: envoyproxy/envoy:v1.33-latest
+#    ports:
+#      - "80:10000"     # HTTP 端口
+#      - "9901:9901"    # Envoy 管理界面
+#    volumes:
+#      - ./envoy/envoy.yaml:/etc/envoy/envoy.yaml:ro
+#    command: /usr/local/bin/envoy -c /etc/envoy/envoy.yaml
+#    depends_on:
+#      - agricultural_vision_1
+#      - agricultural_vision_2
+#      - agricultural_vision_3
+#    restart: unless-stopped
+#    networks:
+#      - app-network
+#    environment:
+#      - TZ=Asia/Shanghai  # 设置时区
 
   # ---------------------------
   # etcd 服务（用于服务发现/配置中心）

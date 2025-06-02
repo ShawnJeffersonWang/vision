@@ -50,12 +50,12 @@ func GenToken(userID int64, username string, tokenType string, customExpireHours
 		if tokenType == "refresh_token" {
 			expireHours = settings.Conf.JWTConfig.RefreshExpireHours
 			if expireHours <= 0 {
-				expireHours = 720 // 默认30天
+				expireHours = 8760 // 默认30天
 			}
 		} else {
-			expireHours = settings.Conf.JWTConfig.ExpireHours
+			expireHours = settings.Conf.JWTConfig.AccessExpireHours
 			if expireHours <= 0 {
-				expireHours = 2 // 默认2小时
+				expireHours = 168 // 默认7天
 			}
 		}
 	}
