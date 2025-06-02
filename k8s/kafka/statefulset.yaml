@@ -1,12 +1,11 @@
 apiVersion: apps/v1
-kind: StatefulSet
+kind: Deployment
 metadata:
   name: kafka
   namespace: agricultural-vision
   labels:
     app: kafka
 spec:
-  serviceName: kafka-headless
   replicas: 1
   selector:
     matchLabels:
@@ -20,59 +19,33 @@ spec:
         - name: kafka
           image: bitnami/kafka:4.0
           ports:
-            - name: client
-              containerPort: 9092
-              protocol: TCP
-            - name: controller
-              containerPort: 9093
-              protocol: TCP
+            - containerPort: 9092
+              name: client
+            - containerPort: 9093
+              name: controller
           env:
             - name: KAFKA_ENABLE_KRAFT
               value: "yes"
             - name: KAFKA_CFG_PROCESS_ROLES
-              value: "controller,broker"
+              value: "controller,broker"  # 同时作为控制器和 broker
             - name: KAFKA_CFG_NODE_ID
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.name
+              value: "0"  # 单节点固定为 0
             - name: KAFKA_CFG_CONTROLLER_QUORUM_VOTERS
-              value: "0@kafka-0.kafka-headless.agricultural-vision.svc.cluster.local:9093"  # 单节点示例
+              value: "0@localhost:9093"  # 单节点指向自身
             - name: KAFKA_CFG_LISTENERS
-              value: "CONTROLLER://:9093,PLAINTEXT://:9092"
+              value: "PLAINTEXT://:9092,CONTROLLER://:9093"  # 添加 CONTROLLER 监听器
             - name: KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP
-              value: "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT"
-            - name: KAFKA_CFG_CONTROLLER_LISTENER_NAMES
-              value: "CONTROLLER"  # 新增这一行
+              value: "PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT"
+            - name: KAFKA_CFG_CONTROLLER_LISTENER_NAMES  # 新增：指定控制器监听器名称
+              value: "CONTROLLER"
             - name: KAFKA_CFG_ADVERTISED_LISTENERS
-              value: "PLAINTEXT://$(hostname -s).kafka-headless.agricultural-vision.svc.cluster.local:9092"
+              value: "PLAINTEXT://localhost:9092"  # 客户端连接地址
             - name: KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR
-              value: "1"  # 单节点场景设为 1
+              value: "1"  # 单节点必须为 1
             - name: KAFKA_CFG_TRANSACTION_STATE_LOG_REPLICATION_FACTOR
-              value: "1"
+              value: "1"  # 单节点必须为 1
             - name: TZ
               value: "Asia/Shanghai"
-      volumes:
-        - name: data
-          emptyDir: {}  # 开发环境使用临时存储，避免 PVC 问题
-  volumeClaimTemplates: []  # 移除 PVC 依赖
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: kafka-headless
-  namespace: agricultural-vision
-spec:
-  clusterIP: None
-  selector:
-    app: kafka
-  ports:
-    - name: client
-      port: 9092
-      targetPort: 9092
-    - name: controller
-      port: 9093
-      targetPort: 9093
-
 ---
 apiVersion: v1
 kind: Service
@@ -83,7 +56,6 @@ spec:
   selector:
     app: kafka
   ports:
-    - name: client
-      port: 9092
+    - port: 9092
       targetPort: 9092
-  type: ClusterIP
+  type: ClusterIP  # 如需外部访问，改为 NodePort

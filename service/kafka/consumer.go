@@ -89,6 +89,7 @@ func (c *Consumer) Start(handler func(*proto.PostCreationMessage) error) error {
 				msg, err := c.reader.ReadMessage(c.ctx)
 				if err != nil {
 					zap.L().Error("读取 Kafka 消息失败", zap.Error(err))
+					zap.L().Debug("Kafka 配置", zap.Any("c.reader.Config()", c.reader.Config()))
 					time.Sleep(1 * time.Second)
 					continue
 				}

@@ -46,7 +46,6 @@ func InitProducer() error {
 			writer: writer,
 		}
 
-		// 启动工作协程处理消息队列
 		go producer.startWorker()
 	})
 
