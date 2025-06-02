@@ -23,4 +23,5 @@ var (
 	ErrorTokenExpired        = errors.New(CodeTokenExpired)
 	ErrorNeedRefreshToken    = errors.New(CodeNeedRefreshToken)
 	ErrorUserNotExist        = errors.New(CodeUserNotExist)
+	ErrKafkaNotEnabled       = errors.New(CodeErrKafkaNotEnabled)
 )

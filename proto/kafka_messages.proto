@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package agricultural_vision.kafka;
+
+// 指定生成的 Go 代码的包路径
+option go_package = "agricultural_vision/proto;proto";
+
+import "google/protobuf/timestamp.proto";
+
+// 帖子创建消息
+message PostCreationMessage {
+  string message_id = 1;     // 唯一消息 ID
+  int64 post_id = 2;         // POST ID
+  int64 user_id = 3;         // 作者 ID
+  string content = 4;        // 帖子内容
+  string image = 5;          // 图片 URL
+  int64 community_id = 6;    // 社区 ID
+  google.protobuf.Timestamp created_at = 7;  // 创建时间
+}

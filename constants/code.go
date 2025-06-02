@@ -25,6 +25,8 @@ const (
 	CodeTokenExpired        string = "token已过期"
 	CodeNeedRefreshToken    string = "需要提供刷新token"
 	CodeUserNotExist        string = "用户不存在"
+	CodeErrKafkaNotEnabled  string = "kafka未启动"
+	CodeKafkaSendFailed     string = "kafka发送失败"
 )
 
 // Context keys

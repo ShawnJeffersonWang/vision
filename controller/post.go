@@ -20,6 +20,35 @@ import (
 	"agricultural_vision/models/request"
 )
 
+// CreatePostHandlerAsync 异步创建帖子的 HTTP 处理函数
+func CreatePostHandlerAsync(c *gin.Context) {
+	// 1. 参数校验
+	p := new(request.CreatePostRequest)
+	if err := c.ShouldBindJSON(p); err != nil {
+		zap.L().Error("请求参数错误", zap.Error(err))
+		ResponseError(c, http.StatusBadRequest, constants.CodeInvalidParam)
+		return
+	}
+
+	userID, err := middleware.GetCurrentUserID(c)
+	if err != nil {
+		zap.L().Error("获取用户 ID 失败", zap.Error(err))
+		ResponseError(c, http.StatusInternalServerError, constants.CodeServerBusy)
+		return
+	}
+
+	// 2. 调用异步创建逻辑
+	data, err := logic.CreatePostAsync(p, userID)
+	if err != nil {
+		zap.L().Error("异步创建帖子失败", zap.Error(err))
+		ResponseError(c, http.StatusInternalServerError, constants.CodeKafkaSendFailed)
+		return
+	}
+
+	// 3. 返回临时响应（包含可追踪的 PostID）
+	ResponseSuccess(c, data)
+}
+
 // 发布帖子
 func CreatePostHandler(c *gin.Context) {
 	//1.获取参数及参数的校验

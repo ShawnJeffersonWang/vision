@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
+	"time"
 )
 
-var Conf = new(AppConfig)
+//var Conf = new(AppConfig)
 
 type AppConfig struct {
 	Name          string `mapstructure:"name"`
@@ -20,7 +21,8 @@ type AppConfig struct {
 	*RedisConfig  `mapstructure:"redis"`
 	*AiConfig     `mapstructure:"ai"`
 	*AliossConfig `mapstructure:"alioss"`
-	*JWTConfig    `mapstructure:"jwt"` // 新增JWT配置
+	*JWTConfig    `mapstructure:"jwt"`   // 新增JWT配置
+	*KafkaConfig  `mapstructure:"kafka"` // 新增 Kafka 配置
 }
 
 type MySQLConfig struct {
@@ -40,6 +42,18 @@ type RedisConfig struct {
 	DB           int    `mapstructure:"db"`
 	PoolSize     int    `mapstructure:"pool_size"`
 	MinIdleConns int    `mapstructure:"min_idle_conns"`
+}
+
+// 新增：Kafka 配置结构体
+type KafkaConfig struct {
+	Enabled           bool     `mapstructure:"enabled"`             // 是否启用 Kafka
+	Brokers           []string `mapstructure:"brokers"`             // Kafka 地址列表（例如：["kafka:9092"]）
+	TopicPostCreation string   `mapstructure:"topic_post_creation"` // 发布帖子主题
+	GroupPostCreation string   `mapstructure:"group_post_creation"` // 消费者组 ID
+	// 可选：其他配置（如消息重试、超时时间等）
+	RetryMax     int           `mapstructure:"retry_max"`     // 最大重试次数
+	WriteTimeout time.Duration `mapstructure:"write_timeout"` // 写入超时时间
+	ReadTimeout  time.Duration `mapstructure:"read_timeout"`  // 读取超时时间
 }
 
 type LogConfig struct {
@@ -92,15 +106,8 @@ func LoadConfig() (*MySQLConfig, error) {
 
 func Init() error {
 	viper.SetConfigFile("./conf/config.yaml")
-	// 启用环境变量支持
 	viper.AutomaticEnv()
 
-	// 绑定环境变量到嵌套字段
-	viper.BindEnv("mysql.password", "MYSQL_PASSWORD")
-	viper.BindEnv("jwt.secret", "JWT_SECRET")
-	viper.BindEnv("ai.api_key", "AI_API_KEY")
-	viper.BindEnv("alioss.access_key_id", "OSS_ACCESS_KEY_ID")
-	viper.BindEnv("alioss.access_key_secret", "OSS_ACCESS_KEY_SECRET")
 	viper.WatchConfig()
 	viper.OnConfigChange(func(in fsnotify.Event) {
 		fmt.Println("配置文件已被修改")

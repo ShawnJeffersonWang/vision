@@ -8,3 +8,4 @@ log/
 *.log
 k8s/base/secret.yaml
 k8s/app/configmap.yaml
+k8s/etcd/job.yaml

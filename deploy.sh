@@ -31,7 +31,15 @@ kubectl apply -f k8s/mysql/
 echo "Deploying Redis..."
 kubectl apply -f k8s/redis/
 
-# 等待 MySQL 和 Redis 就绪
+# 部署 Kafka
+echo "Deploying Kafka..."
+kubectl apply -f k8s/kafka/
+
+# 部署 Etcd
+echo "Deploying Etcd..."
+kubectl apply -f k8s/etcd/
+
+# 等待 MySQL, Redis, Etcd 和 Kafka 就绪
 echo "Waiting for MySQL and Redis to be ready..."
 kubectl wait --for=condition=ready pod -l app=mysql --timeout=120s
 kubectl wait --for=condition=ready pod -l app=redis --timeout=60s
@@ -50,8 +58,7 @@ kubectl get pods -l app=agricultural-vision -o wide
 # 部署 Envoy
 kubectl apply -f k8s/envoy/
 
-
-# 5. 查看 Envoy 状态
+# 查看 Envoy 状态
 kubectl get pods -n agricultural-vision -l app=envoy
 kubectl get svc envoy-service -n agricultural-vision
 

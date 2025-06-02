@@ -1,10 +1,11 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: redis
   namespace: agricultural-vision
 spec:
-  replicas: 1
+  serviceName: redis-service
+  replicas: 2
   selector:
     matchLabels:
       app: redis
@@ -35,9 +36,16 @@ spec:
           volumeMounts:
             - name: redis-storage
               mountPath: /data
-      volumes:
-        - name: redis-storage
-          emptyDir: {}
+  volumeClaimTemplates:
+    - metadata:
+        name: redis-storage
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi
+        # 如果有默认 StorageClass，这里可以省略
+        # storageClassName: standard
 ---
 apiVersion: v1
 kind: Service

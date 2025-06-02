@@ -16,6 +16,7 @@ spec:
         app: agricultural-vision
     spec:
       initContainers:
+        # 保留原有的 MySQL 和 Redis 等待容器
         - name: wait-for-mysql
           image: busybox:1.36
           command:
@@ -38,14 +39,29 @@ spec:
                 sleep 2
               done
               echo "Redis is ready!"
+#        - name: wait-for-kafka
+#          image: busybox:1.36
+#          command:
+#            - sh
+#            - -c
+#            - |
+#              until nc -z kafka-client.agricultural-vision.svc.cluster.local 9092; do
+#                echo "Waiting for Kafka..."
+#                sleep 2
+#              done
+#              echo "Kafka is ready!"
       containers:
         - name: agricultural-vision
-          image: agricultural-vision:latest  # 需要替换为你的实际镜像地址
+          image: agricultural-vision:latest  # 替换为实际镜像
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
               name: http
           env:
+            # 新增：时区配置（覆盖容器默认时区）
+            - name: TZ
+              value: Asia/Shanghai
+            # 保留原有环境变量
             - name: GIN_MODE
               value: "release"
             - name: INSTANCE_NAME
@@ -83,7 +99,7 @@ spec:
                   key: oss-access-key-secret
           resources:
             requests:
-              memory: "128Mi"
+              memory: "256Mi"
               cpu: "100m"
             limits:
               memory: "512Mi"
@@ -106,7 +122,8 @@ spec:
             - name: config
               mountPath: /app/conf
               readOnly: true
-          command: ["./agricultural_vision"]
+          # 确保应用使用正确的配置加载逻辑
+          command: ["./agricultural_vision"]  # 新增启动参数（可选）
       volumes:
         - name: config
           configMap:
@@ -198,6 +215,14 @@ spec:
           port: 8080
   # egress部分保持不变
   egress:
+    # 新增：允许访问 Kafka 服务的 9092 端口
+    - to:
+        - podSelector:
+            matchLabels:
+              app: kafka  # 匹配 Kafka 服务的标签
+      ports:
+        - protocol: TCP
+          port: 9092
     - to:
         - podSelector:
             matchLabels:

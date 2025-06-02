@@ -1,12 +1,12 @@
 package routers
 
 import (
+	"agricultural_vision/logger"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"net/http"
 
 	"agricultural_vision/controller"
-	"agricultural_vision/logger"
 	"agricultural_vision/middleware"
 )
 
@@ -119,7 +119,7 @@ func SetupRouter(mode string) *gin.Engine {
 			// 查询帖子列表（指定社区）（指定排序方式，默认按时间倒序）（用户登录）
 			authCommunityPost.GET("/community/:id/posts", controller.GetCommunityPostListHandler)
 			// 发布帖子
-			authCommunityPost.POST("/post", controller.CreatePostHandler)
+			authCommunityPost.POST("/post", controller.CreatePostHandlerAsync)
 			// 上传帖子图片
 			authCommunityPost.POST("/upload", controller.UploadPostImageHandler)
 			// 删除帖子

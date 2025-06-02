@@ -1,8 +1,14 @@
 package logic
 
 import (
+	"agricultural_vision/pkg/snowflake"
+	"agricultural_vision/proto"
+	"agricultural_vision/service/kafka"
 	"errors"
+	"github.com/golang/protobuf/ptypes/timestamp"
+	"github.com/google/uuid"
 	"strconv"
+	"time"
 
 	"go.uber.org/zap"
 	"gorm.io/gorm"
@@ -55,6 +61,79 @@ func CreatePost(createPostRequest *request.CreatePostRequest, authorID int64) (p
 	//保存到redis
 	err = redis.CreatePost(post.ID, post.CommunityID)
 	return
+}
+
+// 创建帖子（改为只发送 Kafka 消息）
+func CreatePostAsyncUseJSON(createPostRequest *request.CreatePostRequest, authorID int64) (*response.PostResponse, error) {
+	// 1. 生成帖子 ID（提前生成，因为还未写入数据库）
+	postID := snowflake.GenID() // 需要使用分布式 ID 生成器
+
+	// 2. 封装 Kafka 消息
+	message := kafka.PostCreationMessage{
+		MessageID:   uuid.New().String(), // 需要导入 "github.com/google/uuid"
+		UserID:      authorID,
+		Content:     createPostRequest.Content,
+		Image:       createPostRequest.Image,
+		CommunityID: createPostRequest.CommunityID,
+		CreatedAt:   time.Now().UTC(),
+		PostID:      postID, // 需要在 PostCreationMessage 中添加 PostID 字段
+	}
+
+	// 3. 发送 Kafka 消息（使用全局生产者）
+	if err := kafka.SendPostCreationMessageUseJson(message); err != nil {
+		zap.L().Error("CreatePostAsync.SendPostCreationMessage: 发送 kafka 失败", zap.Error(err))
+		return nil, err
+	}
+	zap.L().Info("CreatePostAsync.SendPostCreationMessage: 发送 kafka 成功", zap.Any("message", message))
+
+	// 4. 立即返回（不等待实际创建完成）
+	postResponse := &response.PostResponse{
+		ID:        postID,
+		Content:   createPostRequest.Content,
+		Image:     createPostRequest.Image,
+		Author:    response.UserBriefResponse{ID: authorID},
+		CreatedAt: time.Now().Format("2006-01-02 15:04:05"),
+		Community: response.CommunityBriefResponse{ID: createPostRequest.CommunityID},
+	}
+
+	return postResponse, nil
+}
+
+// logic/post.go
+func CreatePostAsync(createPostRequest *request.CreatePostRequest, authorID int64) (*response.PostResponse, error) {
+	// 生成帖子 ID
+	postID := snowflake.GenID()
+
+	// 封装 Protobuf 消息
+	message := &proto.PostCreationMessage{
+		MessageId:   uuid.New().String(),
+		UserId:      authorID,
+		Content:     createPostRequest.Content,
+		Image:       createPostRequest.Image,
+		CommunityId: createPostRequest.CommunityID,
+		CreatedAt: &timestamp.Timestamp{
+			Seconds: time.Now().UTC().Unix(),
+			Nanos:   int32(time.Now().UTC().Nanosecond()),
+		},
+		PostId: postID,
+	}
+
+	// 发送 Kafka 消息
+	if err := kafka.SendPostCreationMessage(message); err != nil {
+		return nil, err
+	}
+
+	// 立即返回
+	postResponse := &response.PostResponse{
+		ID:        postID,
+		Content:   createPostRequest.Content,
+		Image:     createPostRequest.Image,
+		Author:    response.UserBriefResponse{ID: authorID},
+		CreatedAt: time.Now().Format("2006-01-02 15:04:05"),
+		Community: response.CommunityBriefResponse{ID: createPostRequest.CommunityID},
+	}
+
+	return postResponse, nil
 }
 
 // 删除帖子
