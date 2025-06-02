@@ -7,9 +7,9 @@ import (
 	"agricultural_vision/models/entity"
 	"agricultural_vision/models/request"
 	"agricultural_vision/models/response"
+	"agricultural_vision/pkg/bcrypt"
 	"agricultural_vision/pkg/gomail"
 	auth "agricultural_vision/pkg/jwt"
-	"agricultural_vision/pkg/md5"
 	"fmt"
 	"go.uber.org/zap"
 	"time"
@@ -35,7 +35,7 @@ func SingUp(p *request.SignUpRequest) error {
 
 	user := entity.User{
 		Username: p.Username,
-		Password: md5.EncryptPassword(p.Password),
+		Password: bcrypt.EncryptPassword(p.Password),
 		Email:    p.Email,
 	}
 
@@ -64,7 +64,7 @@ func ChangePassword(p *request.ChangePasswordRequest) error {
 
 	// 修改密码
 	// 先对密码明文进行加密
-	p.Password = md5.EncryptPassword(p.Password)
+	p.Password = bcrypt.EncryptPassword(p.Password)
 	user := entity.User{
 		Password: p.Password,
 		Email:    p.Email,
@@ -93,9 +93,22 @@ func Login(p *request.LoginRequest) (string, error) {
 	loginTime := time.Now()
 
 	// 验证用户
-	user, err := mysql.Login(p.Email, md5.EncryptPassword(p.Password))
+	//user, err := mysql.Login(p.Email, md5.EncryptPassword(p.Password))
+	//if err != nil {
+	//	return "", err
+	//}
+
+	// 1. 先查询用户信息（注意：这里不验证密码）
+	user, err := mysql.GetUserByEmail(p.Email)
 	if err != nil {
-		return "", err
+		// 统一返回模糊错误，避免信息泄露
+		return "", constants.ErrorInvalidCredentials
+	}
+
+	// 2. 验证密码（使用 bcrypt 比较明文和数据库中的哈希值）
+	// 登录逻辑中使用自定义函数
+	if !bcrypt.VerifyPassword(user.Password, p.Password) {
+		return "", constants.ErrorInvalidCredentials
 	}
 
 	// 生成访问token（短期）

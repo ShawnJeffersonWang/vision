@@ -11,6 +11,7 @@ const (
 	CodeEmailNotExist       string = "此邮箱未注册"
 	CodeInvalidPassword     string = "邮箱或密码错误"
 	CodeInvalidEmailCode    string = "邮箱验证码错误"
+	CodeInvalidCredentials  string = "校验失败"
 	CodeNeedLogin           string = "用户需要登录"
 	CodeInvalidToken        string = "无效的token"
 	CodeAiNotAnswer         string = "AI未回答"

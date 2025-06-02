@@ -52,6 +52,26 @@ func Login(email, password string) (*entity.User, error) {
 	return user, nil
 }
 
+// GetUserByEmail 根据邮箱获取用户完整信息（包括密码哈希）
+func GetUserByEmail(email string) (*entity.User, error) {
+	var user entity.User
+
+	// 使用GORM查询用户，通过邮箱精确匹配
+	err := DB.Where("email = ?", email).First(&user).Error
+
+	// 处理记录未找到的情况
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, constants.ErrorUserNotExist
+	}
+
+	// 处理其他数据库错误
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
+
 // 根据用户ID更新用户信息
 func UpdateUserByID(user *entity.User) error {
 	err := DB.Model(&entity.User{}).Where("id = ?", user.ID).Updates(user).Error
