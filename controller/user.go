@@ -94,6 +94,9 @@ func LoginHandler(c *gin.Context) {
 		} else if errors.Is(err, constants.ErrorInvalidPassword) { // 如果是密码不正确错误
 			ResponseError(c, http.StatusUnauthorized, constants.CodeInvalidPassword)
 			return
+		} else if errors.Is(err, constants.ErrorInvalidCredentials) {
+			ResponseError(c, http.StatusUnauthorized, constants.CodeInvalidCredentials)
+			return
 		} else { // 否则返回服务端繁忙错误
 			ResponseError(c, http.StatusInternalServerError, constants.CodeServerBusy)
 			return
