@@ -119,7 +119,7 @@ func SetupRouter(mode string) *gin.Engine {
 			// 查询帖子列表（指定社区）（指定排序方式，默认按时间倒序）（用户登录）
 			authCommunityPost.GET("/community/:id/posts", controller.GetCommunityPostListHandler)
 			// 发布帖子
-			authCommunityPost.POST("/post", controller.CreatePostHandlerAsync)
+			authCommunityPost.POST("/post", controller.CreatePostHandler)
 			// 上传帖子图片
 			authCommunityPost.POST("/upload", controller.UploadPostImageHandler)
 			// 删除帖子

@@ -32,7 +32,7 @@ func main() {
 		log.Fatal("Failed to setup app:", err)
 	}
 	// 启动 Kafka 消费者
-	go startKafkaConsumer(ctx)
+	//go startKafkaConsumer(ctx)
 	// 启动服务器
 	runServer(ctx)
 }
@@ -65,9 +65,9 @@ func setupApp(ctx context.Context) error {
 	}
 
 	// 初始化 Kafka 生产者（全局实例）
-	if err := kafka.InitProducer(); err != nil {
-		return fmt.Errorf("init kafka producer failed: %w", err)
-	}
+	//if err := kafka.InitProducer(); err != nil {
+	//	return fmt.Errorf("init kafka producer failed: %w", err)
+	//}
 
 	// 初始化JWT
 	if err := jwt.Init(); err != nil {
@@ -155,7 +155,7 @@ func cleanup() {
 	mysql.Close()
 	redis.Close()
 	// 其他需要清理的资源
-	kafka.CloseProducer() // 新增：关闭全局生产者
+	//kafka.CloseProducer() // 新增：关闭全局生产者
 }
 
 //func main() {

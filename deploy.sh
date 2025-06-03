@@ -32,12 +32,12 @@ echo "Deploying Redis..."
 kubectl apply -f k8s/redis/
 
 # 部署 Kafka
-echo "Deploying Kafka..."
-kubectl apply -f k8s/kafka/
+#echo "Deploying Kafka..."
+#kubectl apply -f k8s/kafka/
 
 # 部署 Etcd
-echo "Deploying Etcd..."
-kubectl apply -f k8s/etcd/
+#echo "Deploying Etcd..."
+#kubectl apply -f k8s/etcd/
 
 # 等待 MySQL, Redis, Etcd 和 Kafka 就绪
 echo "Waiting for MySQL and Redis to be ready..."
