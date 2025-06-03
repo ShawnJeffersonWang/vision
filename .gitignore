@@ -5,6 +5,7 @@ init.sql
 .env
 secrets/
 log/
+harbor/
 *.log
 k8s/base/secret.yaml
 k8s/app/configmap.yaml
