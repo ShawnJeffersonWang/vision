@@ -2,12 +2,28 @@ services:
   # ---------------------------
   # Redis 服务（缓存）
   # ---------------------------
-  redis:
-    image: "redis:8.0"
+#  redis:
+#    image: "redis:8.0"
+#    ports:
+#      - "6379:6379"
+#    healthcheck:
+#      test: [ "CMD", "redis-cli", "ping" ]
+#      interval: 5s
+#      timeout: 3s
+#      retries: 5
+#    networks:
+#      - app-network
+#    environment:
+#      - TZ=Asia/Shanghai  # 设置时区
+  # ---------------------------
+  # Dragonfly 服务（缓存）
+  # ---------------------------
+  dragonfly:
+    image: "dragonflydb/dragonfly:v1.27.1"
     ports:
       - "6379:6379"
     healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
+      test: [ "CMD", "redis-cli", "-h", "localhost", "ping" ]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -145,7 +161,7 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
-      redis:
+      dragonfly:
         condition: service_healthy
     expose:
       - "8080"  # 只在内部网络暴露端口
@@ -163,7 +179,7 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
-      redis:
+      dragonfly:
         condition: service_healthy
     expose:
       - "8080"
@@ -181,7 +197,7 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
-      redis:
+      dragonfly:
         condition: service_healthy
     expose:
       - "8080"

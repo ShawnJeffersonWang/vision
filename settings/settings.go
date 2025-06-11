@@ -10,19 +10,19 @@ import (
 //var Conf = new(AppConfig)
 
 type AppConfig struct {
-	Name          string `mapstructure:"name"`
-	Mode          string `mapstructure:"mode"`
-	Version       string `mapstructure:"version"`
-	StartTime     string `mapstructure:"start_time"`
-	MachineID     int64  `mapstructure:"machine_id"`
-	Port          int    `mapstructure:"port"`
-	*LogConfig    `mapstructure:"log"`
-	*MySQLConfig  `mapstructure:"mysql"`
-	*RedisConfig  `mapstructure:"redis"`
-	*AiConfig     `mapstructure:"ai"`
-	*AliossConfig `mapstructure:"alioss"`
-	*JWTConfig    `mapstructure:"jwt"`   // 新增JWT配置
-	*KafkaConfig  `mapstructure:"kafka"` // 新增 Kafka 配置
+	Name             string `mapstructure:"name"`
+	Mode             string `mapstructure:"mode"`
+	Version          string `mapstructure:"version"`
+	StartTime        string `mapstructure:"start_time"`
+	MachineID        int64  `mapstructure:"machine_id"`
+	Port             int    `mapstructure:"port"`
+	*LogConfig       `mapstructure:"log"`
+	*MySQLConfig     `mapstructure:"mysql"`
+	*DragonflyConfig `mapstructure:"dragonfly"`
+	*AiConfig        `mapstructure:"ai"`
+	*AliossConfig    `mapstructure:"alioss"`
+	*JWTConfig       `mapstructure:"jwt"`   // 新增JWT配置
+	*KafkaConfig     `mapstructure:"kafka"` // 新增 Kafka 配置
 }
 
 type MySQLConfig struct {
@@ -36,6 +36,15 @@ type MySQLConfig struct {
 }
 
 type RedisConfig struct {
+	Host         string `mapstructure:"host"`
+	Password     string `mapstructure:"password"`
+	Port         int    `mapstructure:"port"`
+	DB           int    `mapstructure:"db"`
+	PoolSize     int    `mapstructure:"pool_size"`
+	MinIdleConns int    `mapstructure:"min_idle_conns"`
+}
+
+type DragonflyConfig struct {
 	Host         string `mapstructure:"host"`
 	Password     string `mapstructure:"password"`
 	Port         int    `mapstructure:"port"`
