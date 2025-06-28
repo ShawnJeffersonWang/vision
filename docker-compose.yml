@@ -1,3 +1,4 @@
+version: '3.8'
 services:
   # ---------------------------
   # Redis 服务（缓存）
@@ -54,6 +55,29 @@ services:
       start_period: 30s
     networks:
       - app-network
+  # ---------------------------
+  # PostgreSQL 服务（数据库）
+  # ---------------------------
+  postgres:
+    image: "postgres:17"  # 使用官方的 PostgreSQL 镜像，推荐指定一个明确的主版本
+    ports:
+      - "5432:5432"      # PostgreSQL 的默认端口是 5432
+    environment:
+      POSTGRES_USER: "root"                     # 设置超级用户的用户名
+      POSTGRES_PASSWORD: "325523"               # 设置超级用户的密码
+      POSTGRES_DB: "agricultural_vision"        # 容器启动时要创建的数据库名称
+      TZ: Asia/Shanghai                         # 设置时区
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql # 挂载初始化脚本
+    healthcheck:
+      # 使用 pg_isready 工具来检查 PostgreSQL 服务是否就绪
+      test: [ "CMD-SHELL", "pg_isready -U root -d agricultural_vision" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - app-network
 
   # Nginx 负载均衡器
 #  nginx:
@@ -99,6 +123,15 @@ services:
       - app-network
     environment:
       - TZ=Asia/Shanghai  # 设置时区
+    # --- Docker 容器健康检查 ---
+#    healthcheck:
+#      # 使用 curl 命令检查 Envoy 管理界面的 /ready 端点
+#      # -f: 当服务器返回错误时 (HTTP code >= 400)，curl 以非零状态码退出
+#      test: ["CMD", "curl", "-f", "http://localhost:9901/ready"]
+#      interval: 10s       # 每10秒检查一次
+#      timeout: 5s         # 检查超时时间5秒
+#      retries: 3          # 重试3次失败后，将容器标记为 unhealthy
+#      start_period: 15s   # 启动容器后，给予15秒的宽限期，在此期间即使检查失败也不会计入重试次数
 
   # ---------------------------
   # etcd 服务（用于服务发现/配置中心）
@@ -125,6 +158,101 @@ services:
       timeout: 5s
       retries: 5
 
+  # ---------------------------
+  # RocketMQ 5.3 服务
+  # ---------------------------
+  # 1. Name Server 服务
+  # 负责服务发现，Broker 在此注册，Client 在此发现 Broker。
+#  rmqnamesrv:
+#    image: apache/rocketmq:5.3.3
+#    container_name: rmqnamesrv
+#    ports:
+#      - "9876:9876" # Name Server 默认端口
+#    command: sh mqnamesrv
+#    networks:
+#      - app-network
+#    healthcheck:
+#      # 使用 RocketMQ admin 工具检查集群状态
+#      test: ["CMD-SHELL", "sh mqadmin clusterList -n localhost:9876"]
+#      interval: 15s
+#      timeout: 5s
+#      retries: 5
+#    volumes:
+#      - rmq-namesrv-logs:/home/rocketmq/logs
+
+  # 2. Broker 服务
+  # 负责消息存储和处理。它依赖于 Name Server。
+#  rmqbroker:
+#    image: apache/rocketmq:5.3.3
+#    container_name: rmqbroker
+#    ports:
+#      - "10911:10911" # Broker 与客户端通信的端口
+#      - "10909:10909" # Broker VIP 通道端口
+#    command: sh mqbroker -c /home/rocketmq/rocketmq-5.3.3/conf/broker.conf
+#    depends_on:
+#      rmqnamesrv:
+#        condition: service_healthy # 确保 Name Server 健康后再启动 Broker
+#    environment:
+#      - NAMESRV_ADDR=rmqnamesrv:9876 # 告诉 Broker 去哪里注册
+#      - ROCKETMQ_CONFIG_brokerIP1=rmqbroker # 设置 Broker 的 IP 为容器名，用于内部网络通信
+#      - ROCKETMQ_CONFIG_autoCreateTopicEnable=true # 允许自动创建 Topic，便于开发
+#      - TZ=Asia/Shanghai # 设置时区
+#    networks:
+#      - app-network
+#    volumes:
+#      - rmq-broker-logs:/home/rocketmq/logs
+#      - rmq-broker-store:/home/rocketmq/store
+#      - ./broker.conf:/home/rocketmq/rocketmq-5.3.3/conf/broker.conf # 挂载自定义配置文件
+
+  # 3. (可选但推荐) RocketMQ Dashboard
+  # 提供一个 Web UI 来管理 Topic、消费者、消息等。
+#  rmqdashboard:
+#    image: apacherocketmq/rocketmq-dashboard:latest
+#    container_name: rmqdashboard
+#    ports:
+#      - "8081:8080" # 将容器的 8080 端口映射到主机的 8081，避免冲突
+#    depends_on:
+#      - rmqnamesrv
+#    environment:
+#      - NAMESRV_ADDR=rmqnamesrv:9876 # 告诉 Dashboard 去哪里连接 Name Server
+#    networks:
+#      - app-network
+
+  # ---------------------------
+  # Pulsar 3.3 服务 (单机模式)
+  # ---------------------------
+  pulsar:
+    image: apachepulsar/pulsar:3.3.7
+    container_name: pulsar
+    ports:
+      - "6650:6650"  # Pulsar 二进制协议端口
+      - "8080:8080"  # Pulsar 管理后台 HTTP 端口
+    command: >
+      /bin/bash -c
+      "bin/apply-config-from-env.py conf/standalone.conf &&
+       exec bin/pulsar standalone"
+    environment:
+      # -- Pulsar 配置 --
+      # 允许无认证的生产者/消费者连接
+      - PULSAR_PREFIX_authenticationEnabled=false
+      # 允许无认证的管理操作
+      - PULSAR_PREFIX_authorizationEnabled=false
+      # 允许在没有创建租户的情况下创建命名空间
+      - PULSAR_PREFIX_allowAutoTopicCreationType=non-partitioned
+      # 默认创建非分区主题
+      - PULSAR_PREFIX_brokerDeleteInactiveTopicsEnabled=false
+      # 不自动删除不活跃的主题
+      - TZ=Asia/Shanghai # 设置时区
+    networks:
+      - app-network
+    healthcheck:
+      # 使用 pulsar-admin 工具检查 broker 的健康状况
+      test: ["CMD-SHELL", "curl -s http://localhost:8080/admin/v2/brokers/healthcheck || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - pulsar-data:/pulsar/data
   # ---------------------------
   # Kafka 4.0 服务（无 ZooKeeper）
   # ---------------------------
@@ -210,6 +338,10 @@ services:
 
 volumes:
   kafka-data:
+  pulsar-data:
+  rmq-namesrv-logs:
+  rmq-broker-logs:
+  rmq-broker-store:
 # ---------------------------
 # 网络配置
 # ---------------------------

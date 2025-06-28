@@ -1,11 +1,11 @@
 package controller
 
 import (
+	"agricultural_vision/dao/postgres"
 	"context"
 	"net/http"
 	"time"
 
-	"agricultural_vision/dao/mysql"
 	"agricultural_vision/dao/redis"
 	"github.com/gin-gonic/gin"
 )
@@ -50,7 +50,7 @@ func HealthCheckHandler(c *gin.Context) {
 
 // checkMySQL 检查 MySQL 连接
 func checkMySQL(ctx context.Context) gin.H {
-	if mysql.DB == nil {
+	if postgres.DB == nil {
 		return gin.H{
 			"status": "unhealthy",
 			"error":  "database not initialized",
@@ -58,7 +58,7 @@ func checkMySQL(ctx context.Context) gin.H {
 	}
 
 	// 获取底层的 *sql.DB
-	sqlDB, err := mysql.DB.DB()
+	sqlDB, err := postgres.DB.DB()
 	if err != nil {
 		return gin.H{
 			"status": "unhealthy",

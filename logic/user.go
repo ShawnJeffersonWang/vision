@@ -2,7 +2,7 @@ package logic
 
 import (
 	"agricultural_vision/constants"
-	"agricultural_vision/dao/mysql"
+	"agricultural_vision/dao"
 	"agricultural_vision/dao/redis"
 	"agricultural_vision/models/entity"
 	"agricultural_vision/models/request"
@@ -18,7 +18,7 @@ import (
 // 用户注册
 func SingUp(p *request.SignUpRequest) error {
 	// 1.判断邮箱是否已注册
-	flag, err := mysql.CheckEmailExist(p.Email)
+	flag, err := dao.CheckEmailExist(p.Email)
 	// 如果数据库查询出错
 	if err != nil {
 		return err
@@ -40,14 +40,14 @@ func SingUp(p *request.SignUpRequest) error {
 	}
 
 	// 3.保存进数据库
-	err = mysql.InsertUser(&user)
+	err = dao.InsertUser(&user)
 	return err
 }
 
 // 修改密码
 func ChangePassword(p *request.ChangePasswordRequest) error {
 	// 验证邮箱是否已注册
-	flag, err := mysql.CheckEmailExist(p.Email)
+	flag, err := dao.CheckEmailExist(p.Email)
 	// 如果数据库查询出错
 	if err != nil {
 		return err
@@ -71,7 +71,7 @@ func ChangePassword(p *request.ChangePasswordRequest) error {
 	}
 
 	// 再更新数据库
-	return mysql.UpdatePassword(&user)
+	return dao.UpdatePassword(&user)
 }
 
 // 用户登录
@@ -99,7 +99,7 @@ func Login(p *request.LoginRequest) (string, error) {
 	//}
 
 	// 1. 先查询用户信息（注意：这里不验证密码）
-	user, err := mysql.GetUserByEmail(p.Email)
+	user, err := dao.GetUserByEmail(p.Email)
 	if err != nil {
 		// 统一返回模糊错误，避免信息泄露
 		return "", constants.ErrorInvalidCredentials
@@ -146,7 +146,7 @@ func Login(p *request.LoginRequest) (string, error) {
 			Success:   true,
 		}
 
-		if err := mysql.RecordLoginHistory(history); err != nil {
+		if err := dao.RecordLoginHistory(history); err != nil {
 			zap.L().Error("记录登录历史失败",
 				zap.Int64("user_id", user.ID),
 				zap.Error(err))
@@ -181,7 +181,7 @@ func GetLoginHistory(userID int64, page, pageSize int) (*response.LoginHistoryRe
 	offset := (page - 1) * pageSize
 
 	// 获取登录历史
-	histories, err := mysql.GetLoginHistory(userID, offset, pageSize)
+	histories, err := dao.GetLoginHistory(userID, offset, pageSize)
 	if err != nil {
 		zap.L().Error("获取登录历史失败",
 			zap.Int64("user_id", userID),
@@ -190,7 +190,7 @@ func GetLoginHistory(userID int64, page, pageSize int) (*response.LoginHistoryRe
 	}
 
 	// 获取总数
-	total, err := mysql.GetLoginHistoryCount(userID)
+	total, err := dao.GetLoginHistoryCount(userID)
 	if err != nil {
 		zap.L().Error("获取登录历史总数失败",
 			zap.Int64("user_id", userID),
@@ -226,7 +226,7 @@ func RefreshToken(refreshToken string, deviceID string) (*response.TokenResponse
 	}
 
 	// 检查用户状态
-	user, err := mysql.GetUserByID(claims.UserID)
+	user, err := dao.GetUserByID(claims.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -333,19 +333,19 @@ func updateRefreshToken(userID int64, oldToken, newToken, deviceID string) error
 
 // 获取用户信息
 func GetUserInfo(id int64) (*entity.User, error) {
-	return mysql.GetUserInfo(id)
+	return dao.GetUserInfo(id)
 }
 
 // 更新用户信息
 func UpdateUserInfo(p *request.UpdateUserInfoRequest, id int64) error {
 	// 1. 邮箱校验
 	// 查询用户原本的邮箱
-	user, err := mysql.GetUserInfo(id)
+	user, err := dao.GetUserInfo(id)
 	if err != nil {
 		return err
 	}
 	// 判断邮箱是否已注册
-	flag, err := mysql.CheckEmailExist(p.Email)
+	flag, err := dao.CheckEmailExist(p.Email)
 	if err != nil {
 		return err
 	}
@@ -362,7 +362,7 @@ func UpdateUserInfo(p *request.UpdateUserInfoRequest, id int64) error {
 		Avatar:    p.Avatar,
 	}
 
-	return mysql.UpdateUserByID(&newUser)
+	return dao.UpdateUserByID(&newUser)
 }
 
 // 查询用户主页
@@ -377,7 +377,7 @@ func GetUserHomePage(targetUserID int64) (*response.UserHomePageResponse, error)
 	}
 
 	// 获取用户基本信息并填充
-	userInfo, err := mysql.GetUserInfo(targetUserID)
+	userInfo, err := dao.GetUserInfo(targetUserID)
 	if err != nil {
 		return nil, err
 	}

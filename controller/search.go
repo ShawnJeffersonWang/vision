@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"agricultural_vision/dao/postgres"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -9,7 +10,6 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"agricultural_vision/constants"
-	"agricultural_vision/dao/mysql"
 	"agricultural_vision/models/entity"
 	"agricultural_vision/models/response"
 )
@@ -24,7 +24,7 @@ func SearchHandler(c *gin.Context) {
 
 	var results []entity.CropDetail
 	query := "%" + keyword + "%" // 模糊匹配
-	err := mysql.DB.Where("name LIKE ? OR description LIKE ? OR introduction LIKE ?", query, query, query).
+	err := postgres.DB.Where("name LIKE ? OR description LIKE ? OR introduction LIKE ?", query, query, query).
 		Find(&results).Error
 	if err != nil {
 		ResponseError(c, http.StatusInternalServerError, constants.CodeServerBusy)
@@ -126,7 +126,7 @@ func SearchCropHandler(c *gin.Context) {
 
 	var crop entity.CropDetail
 
-	err = mysql.DB.Where("id = ?", cropID).Find(&crop).Error
+	err = postgres.DB.Where("id = ?", cropID).Find(&crop).Error
 	if err != nil {
 		ResponseError(c, http.StatusInternalServerError, constants.CodeServerBusy)
 		return

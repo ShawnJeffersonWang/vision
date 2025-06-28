@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"agricultural_vision/dao/postgres"
 	"agricultural_vision/settings"
 	"errors"
 	"fmt"
@@ -14,7 +15,6 @@ import (
 	"go.uber.org/zap"
 
 	"agricultural_vision/constants"
-	"agricultural_vision/dao/mysql"
 	"agricultural_vision/logic"
 	"agricultural_vision/middleware"
 	"agricultural_vision/models/entity"
@@ -295,7 +295,7 @@ func GetUserInfoHandler(c *gin.Context) {
 		return
 	}
 	// 查询发过的帖子数量
-	if err := mysql.DB.Model(&entity.Post{}).Where("author_id = ?", userID).Count(&data.PostNum).Error; err != nil {
+	if err := postgres.DB.Model(&entity.Post{}).Where("author_id = ?", userID).Count(&data.PostNum).Error; err != nil {
 		zap.L().Error("查询个人发帖数量失败", zap.Error(err))
 		ResponseError(c, http.StatusInternalServerError, constants.CodeServerBusy)
 		return
@@ -387,7 +387,7 @@ func UpdateUserAvatarHandler(c *gin.Context) {
 	}
 
 	// 将头像地址更新到数据库
-	err = mysql.DB.Model(&entity.User{}).Where("id = ?", userID).Update("avatar", fileURL).Error
+	err = postgres.DB.Model(&entity.User{}).Where("id = ?", userID).Update("avatar", fileURL).Error
 	if err != nil {
 		zap.L().Error("更新头像失败", zap.Error(err))
 		ResponseError(c, http.StatusInternalServerError, constants.CodeServerBusy)

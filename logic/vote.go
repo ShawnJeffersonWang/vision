@@ -1,6 +1,7 @@
 package logic
 
 import (
+	"agricultural_vision/dao"
 	"errors"
 	"strconv"
 
@@ -8,7 +9,6 @@ import (
 	"gorm.io/gorm"
 
 	"agricultural_vision/constants"
-	"agricultural_vision/dao/mysql"
 	"agricultural_vision/dao/redis"
 	"agricultural_vision/models/request"
 )
@@ -22,7 +22,7 @@ func VoteForPost(userID int64, p *request.VoteRequest) error {
 	)
 
 	// 在mysql中查询postID是否存在
-	_, err := mysql.GetPostById(p.PostID)
+	_, err := dao.GetPostById(p.PostID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) { // 如果查询不到帖子
 			return constants.ErrorNoPost
@@ -43,7 +43,7 @@ func CommentVote(userID int64, p *request.VoteRequest) error {
 	)
 
 	ids := []string{strconv.Itoa(int(p.CommentID))}
-	comment, err := mysql.GetCommentListByIDs(ids)
+	comment, err := dao.GetCommentListByIDs(ids)
 	if err != nil {
 		return err
 	}

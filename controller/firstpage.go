@@ -1,17 +1,17 @@
 package controller
 
 import (
+	"agricultural_vision/dao"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 
 	"agricultural_vision/constants"
-	"agricultural_vision/dao/mysql"
 )
 
 func GetNewsHandler(c *gin.Context) {
-	news, err := mysql.GetNews()
+	news, err := dao.GetNews()
 	if err != nil {
 		zap.L().Error("获取新闻失败", zap.Error(err))
 		ResponseError(c, http.StatusInternalServerError, constants.CodeServerBusy)
@@ -23,7 +23,7 @@ func GetNewsHandler(c *gin.Context) {
 }
 
 func GetProverbHandler(c *gin.Context) {
-	proverbs, err := mysql.GetProverb()
+	proverbs, err := dao.GetProverb()
 	if err != nil {
 		zap.L().Error("获取谚语失败", zap.Error(err))
 		ResponseError(c, http.StatusInternalServerError, constants.CodeServerBusy)
@@ -35,7 +35,7 @@ func GetProverbHandler(c *gin.Context) {
 }
 
 func GetCropHandler(c *gin.Context) {
-	crops, err := mysql.GetCrop()
+	crops, err := dao.GetCrop()
 	if err != nil {
 		zap.L().Error("获取农作物百科失败", zap.Error(err))
 		ResponseError(c, http.StatusInternalServerError, constants.CodeServerBusy)
@@ -47,7 +47,7 @@ func GetCropHandler(c *gin.Context) {
 }
 
 func GetVideoHandler(c *gin.Context) {
-	videos, err := mysql.GetVideo()
+	videos, err := dao.GetVideo()
 	if err != nil {
 		zap.L().Error("获取视频失败", zap.Error(err))
 		ResponseError(c, http.StatusInternalServerError, constants.CodeServerBusy)
@@ -59,7 +59,7 @@ func GetVideoHandler(c *gin.Context) {
 }
 
 func GetPoetryHandler(c *gin.Context) {
-	poetry, err := mysql.GetPoetry()
+	poetry, err := dao.GetPoetry()
 	if err != nil {
 		zap.L().Error("获取古诗失败", zap.Error(err))
 		ResponseError(c, http.StatusInternalServerError, constants.CodeServerBusy)

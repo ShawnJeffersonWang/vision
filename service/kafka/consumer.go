@@ -1,7 +1,7 @@
 package kafka
 
 import (
-	"agricultural_vision/dao/mysql"
+	"agricultural_vision/dao"
 	"agricultural_vision/dao/redis"
 	"agricultural_vision/models/entity"
 	"agricultural_vision/proto"
@@ -9,10 +9,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/segmentio/kafka-go"
 	"go.uber.org/zap"
 	protobuf "google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"time"
 )
 
@@ -127,7 +127,7 @@ func ProcessPostCreationUseJson(message PostCreationMessage) error {
 	}
 
 	// 写入数据库（示例逻辑，需根据实际业务调整）
-	if err := mysql.CreatePost(post); err != nil {
+	if err := dao.CreatePost(post); err != nil {
 		return fmt.Errorf("写入数据库失败: %w", err)
 	}
 
@@ -159,7 +159,7 @@ func ProcessPostCreation(message *proto.PostCreationMessage) error {
 	}
 
 	// 写入数据库
-	if err := mysql.CreatePost(post); err != nil {
+	if err := dao.CreatePost(post); err != nil {
 		return fmt.Errorf("写入数据库失败: %w", err)
 	}
 
@@ -172,6 +172,6 @@ func ProcessPostCreation(message *proto.PostCreationMessage) error {
 }
 
 // 辅助函数：将 Protobuf 时间戳转换为 time.Time
-func timestampToTime(ts *timestamp.Timestamp) time.Time {
+func timestampToTime(ts *timestamppb.Timestamp) time.Time {
 	return time.Unix(ts.Seconds, int64(ts.Nanos)).UTC()
 }

@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"agricultural_vision/dao/mysql"
+	"agricultural_vision/dao"
 	"go.uber.org/zap"
 	"net/http"
 	"strings"
@@ -71,7 +71,7 @@ func AdminAuthMiddleware() gin.HandlerFunc {
 			}
 
 			// 从数据库获取用户信息
-			user, err := mysql.GetUserByID(uid)
+			user, err := dao.GetUserByID(uid)
 			if err != nil {
 				zap.L().Error("获取用户信息失败",
 					zap.Int64("user_id", uid),

@@ -1,6 +1,7 @@
 package logic
 
 import (
+	"agricultural_vision/dao"
 	"errors"
 	"strconv"
 
@@ -8,7 +9,6 @@ import (
 	"gorm.io/gorm"
 
 	"agricultural_vision/constants"
-	"agricultural_vision/dao/mysql"
 	"agricultural_vision/dao/redis"
 	"agricultural_vision/models/entity"
 	"agricultural_vision/models/request"
@@ -18,7 +18,7 @@ import (
 // 创建评论
 func CreateComment(createCommentRequest *request.CreateCommentRequest, userID int64) (*response.CommentResponse, error) {
 	// 在mysql中查询postID是否存在
-	_, err := mysql.GetPostById(createCommentRequest.PostID)
+	_, err := dao.GetPostById(createCommentRequest.PostID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) { // 如果查询不到帖子
 			return nil, constants.ErrorNoPost
@@ -34,7 +34,7 @@ func CreateComment(createCommentRequest *request.CreateCommentRequest, userID in
 		AuthorID: userID,
 		PostID:   createCommentRequest.PostID,
 	}
-	if err := mysql.CreateComment(comment); err != nil {
+	if err := dao.CreateComment(comment); err != nil {
 		return nil, err
 	}
 
@@ -51,7 +51,7 @@ func CreateComment(createCommentRequest *request.CreateCommentRequest, userID in
 	}
 
 	// 查询作者信息
-	author, err := mysql.GetUserBriefInfo(userID)
+	author, err := dao.GetUserBriefInfo(userID)
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +59,7 @@ func CreateComment(createCommentRequest *request.CreateCommentRequest, userID in
 	// 如果是二级以上评论（不展示回复数，展示父评论作者信息）
 	if comment.ParentID != nil && *comment.ParentID != *comment.RootID {
 		// 查询父评论的作者信息
-		parentUserinfo, err := mysql.GetUserBriefInfoByCommentID(*comment.ParentID)
+		parentUserinfo, err := dao.GetUserBriefInfoByCommentID(*comment.ParentID)
 		if err != nil {
 			return nil, err
 		}
@@ -103,7 +103,7 @@ func CreateComment(createCommentRequest *request.CreateCommentRequest, userID in
 func DeleteComment(commentID int64, userID int64) error {
 	// 先从mysql中查找评论
 	ids := []string{strconv.Itoa(int(commentID))}
-	comment, err := mysql.GetCommentListByIDs(ids)
+	comment, err := dao.GetCommentListByIDs(ids)
 	if err != nil {
 		return err
 	}
@@ -117,7 +117,7 @@ func DeleteComment(commentID int64, userID int64) error {
 	}
 
 	// 在mysql中删除评论
-	if err := mysql.DeleteComment(commentID); err != nil {
+	if err := dao.DeleteComment(commentID); err != nil {
 		return err
 	}
 
@@ -146,7 +146,7 @@ func GetTopCommentList(postID int64, listRequest *request.ListRequest, userID in
 	}
 
 	//根据id列表去数据库查询评论详细信息
-	comments, err := mysql.GetCommentListByIDs(ids)
+	comments, err := dao.GetCommentListByIDs(ids)
 	if err != nil {
 		return
 	}
@@ -163,7 +163,7 @@ func GetTopCommentList(postID int64, listRequest *request.ListRequest, userID in
 	//将帖子作者及分区信息查询出来填充到帖子中
 	for idx, comment := range comments {
 		//查询作者简略信息
-		userBriefInfo, err := mysql.GetUserBriefInfo(comment.AuthorID)
+		userBriefInfo, err := dao.GetUserBriefInfo(comment.AuthorID)
 		if err != nil { // 遇到错误不返回，继续执行后续逻辑
 			zap.L().Error("查询作者信息失败", zap.Error(err))
 			continue
@@ -200,7 +200,7 @@ func GetSonCommentList(rootID int64, listRequest *request.ListRequest, userID in
 	}
 
 	// 从mysql中查询子评论
-	comments, total, err := mysql.GetSonCommentList(rootID, listRequest.Page, listRequest.Size)
+	comments, total, err := dao.GetSonCommentList(rootID, listRequest.Page, listRequest.Size)
 	if err != nil {
 		return
 	}
@@ -224,7 +224,7 @@ func GetSonCommentList(rootID int64, listRequest *request.ListRequest, userID in
 	// 将帖子作者及分区信息查询出来填充到帖子中
 	for idx, comment := range comments {
 		//查询作者简略信息
-		userBriefInfo, err := mysql.GetUserBriefInfo(comment.AuthorID)
+		userBriefInfo, err := dao.GetUserBriefInfo(comment.AuthorID)
 		if err != nil {
 			zap.L().Error("查询作者信息失败", zap.Error(err))
 			continue
@@ -240,7 +240,7 @@ func GetSonCommentList(rootID int64, listRequest *request.ListRequest, userID in
 		//如果是二级以上评论，则需要查询父评论的作者信息
 		if *comment.ParentID != *comment.RootID {
 			//查询父评论的作者简略信息
-			parentUserBriefInfo, err := mysql.GetUserBriefInfoByCommentID(*comment.ParentID)
+			parentUserBriefInfo, err := dao.GetUserBriefInfoByCommentID(*comment.ParentID)
 			if err != nil {
 				zap.L().Error("查询父评论作者信息失败", zap.Error(err))
 				continue

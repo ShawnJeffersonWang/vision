@@ -2,7 +2,7 @@ package logic
 
 import (
 	"agricultural_vision/constants"
-	"agricultural_vision/dao/mysql"
+	"agricultural_vision/dao"
 	"agricultural_vision/models/entity"
 	"agricultural_vision/models/request"
 	"agricultural_vision/models/response"
@@ -11,7 +11,7 @@ import (
 // CreateCommunity 创建社区
 func CreateCommunity(req *request.CreateCommunityRequest) error {
 	// 检查社区名称是否已存在
-	exists, err := mysql.CheckCommunityNameExists(req.CommunityName)
+	exists, err := dao.CheckCommunityNameExists(req.CommunityName)
 	if err != nil {
 		return err
 	}
@@ -26,13 +26,13 @@ func CreateCommunity(req *request.CreateCommunityRequest) error {
 	}
 
 	// 调用数据层创建社区
-	return mysql.CreateCommunity(community)
+	return dao.CreateCommunity(community)
 }
 
 func GetCommunityList() ([]*response.CommunityBriefResponse, error) {
-	return mysql.GetCommunityList()
+	return dao.GetCommunityList()
 }
 
 func GetCommunityDetail(id int64) (*entity.Community, error) {
-	return mysql.GetCommunityById(id)
+	return dao.GetCommunityById(id)
 }

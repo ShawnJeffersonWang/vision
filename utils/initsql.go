@@ -1,12 +1,12 @@
 package utils
 
 import (
-	"agricultural_vision/dao/mysql"
+	"agricultural_vision/dao/postgres"
 	"agricultural_vision/models/entity"
 )
 
 func InitSqlTable() (err error) {
-	err = mysql.DB.AutoMigrate(
+	err = postgres.DB.AutoMigrate(
 		&entity.User{},
 		&entity.News{},
 		&entity.Proverb{},

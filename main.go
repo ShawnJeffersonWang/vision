@@ -1,6 +1,7 @@
 package main
 
 import (
+	"agricultural_vision/dao/postgres"
 	"agricultural_vision/pkg/jwt"
 	"agricultural_vision/pkg/snowflake"
 	"agricultural_vision/service/kafka"
@@ -16,7 +17,6 @@ import (
 	"time"
 
 	"agricultural_vision/controller"
-	"agricultural_vision/dao/mysql"
 	"agricultural_vision/dao/redis"
 	"agricultural_vision/logger"
 	"agricultural_vision/routers"
@@ -50,8 +50,11 @@ func setupApp(ctx context.Context) error {
 	}
 
 	// 初始化数据库
-	if err := mysql.Init(settings.Conf.MySQLConfig); err != nil {
-		return fmt.Errorf("init mysql failed: %w", err)
+	//if err := mysql.Init(settings.Conf.MySQLConfig); err != nil {
+	//	return fmt.Errorf("init mysql failed: %w", err)
+	//}
+	if err := postgres.Init(settings.Conf.PostgreSQLConfig); err != nil {
+		return fmt.Errorf("init postgresql failed: %w", err)
 	}
 
 	// 建表
@@ -152,7 +155,7 @@ func runServer(ctx context.Context) {
 
 // cleanup 清理资源
 func cleanup() {
-	mysql.Close()
+	//mysql.Close()
 	redis.Close()
 	// 其他需要清理的资源
 	kafka.CloseProducer() // 新增：关闭全局生产者

@@ -1,6 +1,7 @@
-package mysql
+package dao
 
 import (
+	"agricultural_vision/dao/postgres"
 	"errors"
 
 	"gorm.io/gorm"
@@ -12,14 +13,14 @@ import (
 
 // CreateCommunity 创建社区
 func CreateCommunity(community *entity.Community) error {
-	result := DB.Create(community)
+	result := postgres.DB.Create(community)
 	return result.Error
 }
 
 // CheckCommunityNameExists 检查社区名称是否已存在
 func CheckCommunityNameExists(name string) (bool, error) {
 	var count int64
-	result := DB.Model(&entity.Community{}).
+	result := postgres.DB.Model(&entity.Community{}).
 		Where("community_name = ?", name).
 		Count(&count)
 
@@ -34,7 +35,7 @@ func CheckCommunityNameExists(name string) (bool, error) {
 func GetCommunityList() ([]*response.CommunityBriefResponse, error) {
 	var communities []*response.CommunityBriefResponse
 
-	result := DB.Model(&entity.Community{}).
+	result := postgres.DB.Model(&entity.Community{}).
 		Select("id", "community_name").
 		Find(&communities)
 
@@ -50,7 +51,7 @@ func GetCommunityList() ([]*response.CommunityBriefResponse, error) {
 func GetCommunityById(id int64) (*entity.Community, error) {
 	var community entity.Community
 
-	result := DB.First(&community, id)
+	result := postgres.DB.First(&community, id)
 
 	// 如果未查询到结果
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) {

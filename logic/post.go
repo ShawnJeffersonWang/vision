@@ -1,12 +1,13 @@
 package logic
 
 import (
+	"agricultural_vision/dao"
 	"agricultural_vision/pkg/snowflake"
 	"agricultural_vision/proto"
 	"agricultural_vision/service/kafka"
 	"errors"
-	"github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/google/uuid"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"strconv"
 	"time"
 
@@ -14,7 +15,6 @@ import (
 	"gorm.io/gorm"
 
 	"agricultural_vision/constants"
-	"agricultural_vision/dao/mysql"
 	"agricultural_vision/dao/redis"
 	"agricultural_vision/models/entity"
 	"agricultural_vision/models/request"
@@ -31,19 +31,19 @@ func CreatePost(createPostRequest *request.CreatePostRequest, authorID int64) (p
 	}
 
 	//保存到数据库
-	err = mysql.CreatePost(post)
+	err = dao.CreatePost(post)
 	if err != nil {
 		return
 	}
 
 	//查询作者简略信息
-	userBriefInfo, err := mysql.GetUserBriefInfo(post.AuthorID)
+	userBriefInfo, err := dao.GetUserBriefInfo(post.AuthorID)
 	if err != nil { // 遇到错误不返回，继续执行后续逻辑
 		zap.L().Error("查询作者信息失败", zap.Error(err))
 	}
 
 	//查询社区详情
-	community, err := mysql.GetCommunityById(post.CommunityID)
+	community, err := dao.GetCommunityById(post.CommunityID)
 	if err != nil { // 遇到错误不返回，继续执行后续逻辑
 		zap.L().Error("查询社区详情失败", zap.Error(err))
 	}
@@ -111,7 +111,7 @@ func CreatePostAsync(createPostRequest *request.CreatePostRequest, authorID int6
 		Content:     createPostRequest.Content,
 		Image:       createPostRequest.Image,
 		CommunityId: createPostRequest.CommunityID,
-		CreatedAt: &timestamp.Timestamp{
+		CreatedAt: &timestamppb.Timestamp{
 			Seconds: time.Now().UTC().Unix(),
 			Nanos:   int32(time.Now().UTC().Nanosecond()),
 		},
@@ -139,7 +139,7 @@ func CreatePostAsync(createPostRequest *request.CreatePostRequest, authorID int6
 // 删除帖子
 func DeletePost(postID int64, userID int64) error {
 	// 从mysql查询帖子
-	post, err := mysql.GetPostById(postID)
+	post, err := dao.GetPostById(postID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) { // 如果查询不到帖子
 			return constants.ErrorNoPost
@@ -153,7 +153,7 @@ func DeletePost(postID int64, userID int64) error {
 	communityID := post.CommunityID
 
 	// 删除mysql中的帖子
-	if err := mysql.DeletePost(postID); err != nil {
+	if err := dao.DeletePost(postID); err != nil {
 		return err
 	}
 
@@ -170,7 +170,7 @@ func GetPostListByIDs(ids []string, userID int64) (postResponses []*response.Pos
 	//调用此函数前，已经对ids进行判断，不为空
 
 	//根据id列表去数据库查询帖子详细信息
-	posts, err := mysql.GetPostListByIDs(ids)
+	posts, err := dao.GetPostListByIDs(ids)
 	if err != nil {
 		return
 	}
@@ -192,14 +192,14 @@ func GetPostListByIDs(ids []string, userID int64) (postResponses []*response.Pos
 	//将帖子作者及分区信息查询出来填充到帖子中
 	for idx, post := range posts {
 		//查询作者简略信息
-		userBriefInfo, err := mysql.GetUserBriefInfo(post.AuthorID)
+		userBriefInfo, err := dao.GetUserBriefInfo(post.AuthorID)
 		if err != nil { // 遇到错误不返回，继续执行后续逻辑
 			zap.L().Error("查询作者信息失败", zap.Error(err))
 			continue
 		}
 
 		//查询社区详情
-		community, err := mysql.GetCommunityById(post.CommunityID)
+		community, err := dao.GetCommunityById(post.CommunityID)
 		if err != nil { // 遇到错误不返回，继续执行后续逻辑
 			zap.L().Error("查询社区详情失败", zap.Error(err))
 			continue
@@ -282,7 +282,7 @@ func GetUserPostList(userID int64, listRequest *request.ListRequest) (postListRe
 	}
 
 	// 查询该用户的所有帖子
-	posts, total, err := mysql.GetPostListByUserID(userID, listRequest.Page, listRequest.Size)
+	posts, total, err := dao.GetPostListByUserID(userID, listRequest.Page, listRequest.Size)
 	if err != nil {
 		return
 	}

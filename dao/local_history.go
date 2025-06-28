@@ -1,21 +1,22 @@
 // mysql/login_history.go
-package mysql
+package dao
 
 import (
+	"agricultural_vision/dao/postgres"
 	"agricultural_vision/models/entity"
 	"time"
 )
 
 // RecordLoginHistory 记录登录历史
 func RecordLoginHistory(history *entity.LoginHistory) error {
-	return DB.Create(history).Error
+	return postgres.DB.Create(history).Error
 }
 
 // GetLoginHistory 获取登录历史（分页）
 func GetLoginHistory(userID int64, offset, limit int) ([]*entity.LoginHistory, error) {
 	var histories []*entity.LoginHistory
 
-	err := DB.Where("user_id = ?", userID).
+	err := postgres.DB.Where("user_id = ?", userID).
 		Order("login_time DESC").
 		Offset(offset).
 		Limit(limit).
@@ -28,7 +29,7 @@ func GetLoginHistory(userID int64, offset, limit int) ([]*entity.LoginHistory, e
 func GetRecentFailedAttempts(email string, duration time.Duration) (int64, error) {
 	var count int64
 
-	err := DB.Model(&entity.LoginHistory{}).
+	err := postgres.DB.Model(&entity.LoginHistory{}).
 		Joins("JOIN users ON users.id = login_history.user_id").
 		Where("users.email = ? AND login_history.success = ? AND login_history.login_time > ?",
 			email, false, time.Now().Add(-duration)).
@@ -41,7 +42,7 @@ func GetRecentFailedAttempts(email string, duration time.Duration) (int64, error
 func GetLoginHistoryCount(userID int64) (int64, error) {
 	var count int64
 
-	err := DB.Model(&entity.LoginHistory{}).
+	err := postgres.DB.Model(&entity.LoginHistory{}).
 		Where("user_id = ?", userID).
 		Count(&count).Error
 
@@ -52,7 +53,7 @@ func GetLoginHistoryCount(userID int64) (int64, error) {
 func GetRecentLoginHistory(userID int64, limit int) ([]*entity.LoginHistory, error) {
 	var histories []*entity.LoginHistory
 
-	err := DB.Where("user_id = ?", userID).
+	err := postgres.DB.Where("user_id = ?", userID).
 		Order("login_time DESC").
 		Limit(limit).
 		Find(&histories).Error

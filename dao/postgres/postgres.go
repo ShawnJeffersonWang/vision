@@ -1,4 +1,4 @@
-package mysql
+package postgres // 包名从 mysql 修改为 postgres
 
 import (
 	"context"
@@ -7,26 +7,28 @@ import (
 	"os"
 	"time"
 
-	"gorm.io/driver/mysql"
+	"gorm.io/driver/postgres" // 关键：导入 PostgreSQL 驱动
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 	"gorm.io/gorm/schema"
 
-	"agricultural_vision/settings"
+	"agricultural_vision/settings" // 假设您的 settings 包路径
 )
 
-var DBMySQL *gorm.DB
+var DB *gorm.DB
 
-// Init 初始化 MySQL 连接
-func Init(cfg *settings.MySQLConfig) (err error) {
+// Init 初始化 PostgreSQL 连接
+func Init(cfg *settings.PostgreSQLConfig) (err error) {
 	// 打印配置，调试用
-	log.Printf("MySQL Config: host=%s, port=%d, user=%s, db=%s",
-		cfg.Host, cfg.Port, cfg.User, cfg.DB)
-	// 构造 DSN
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local",
-		cfg.User, cfg.Password, cfg.Host, cfg.Port, cfg.DB)
+	//log.Printf("PostgreSQL Config: host=%s, port=%d, user=%s, dbname=%s, timezone=%s",
+	//	cfg.Host, cfg.Port, cfg.User, cfg.DBName, cfg.TimeZone)
 
-	// 自定义日志配置
+	// 构造 PostgreSQL 的 DSN
+	// 格式: "host=localhost user=gorm password=gorm dbname=gorm port=9920 sslmode=disable TimeZone=Asia/Shanghai"
+	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%d",
+		cfg.Host, cfg.User, cfg.Password, cfg.DBName, cfg.Port)
+
+	// 自定义日志配置 (这部分无需修改)
 	newLogger := logger.New(
 		log.New(os.Stdout, "\r\n", log.LstdFlags),
 		logger.Config{
@@ -38,19 +40,20 @@ func Init(cfg *settings.MySQLConfig) (err error) {
 	)
 
 	// 配置 GORM 选项
-	DBMySQL, err = gorm.Open(mysql.Open(dsn), &gorm.Config{
+	// 关键：使用 postgres.Open()
+	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{
 		NamingStrategy: schema.NamingStrategy{
 			SingularTable: true,
 		},
 		Logger: newLogger,
 	})
 	if err != nil {
-		log.Printf("Failed to connect to MySQL with DSN: %s, error: %v", dsn, err)
+		log.Printf("Failed to connect to PostgreSQL with DSN: %s, error: %v", dsn, err)
 		return
 	}
 
-	// 获取通用数据库连接池对象并设置连接池配置
-	sqlDB, err := DBMySQL.DB()
+	// 获取通用数据库连接池对象并设置连接池配置 (这部分无需修改)
+	sqlDB, err := DB.DB()
 	if err != nil {
 		return
 	}
@@ -63,23 +66,23 @@ func Init(cfg *settings.MySQLConfig) (err error) {
 	return
 }
 
-// Close 关闭 MySQL 连接
+// Close 关闭 PostgreSQL 连接 (函数体无需修改)
 func Close() {
-	if DBMySQL != nil {
-		sqlDB, err := DBMySQL.DB()
+	if DB != nil {
+		sqlDB, err := DB.DB()
 		if err == nil {
 			_ = sqlDB.Close()
 		}
 	}
 }
 
-// Ping 检查数据库连接
+// Ping 检查数据库连接 (函数体无需修改)
 func Ping(ctx context.Context) error {
-	if DBMySQL == nil {
+	if DB == nil {
 		return fmt.Errorf("database not initialized")
 	}
 
-	sqlDB, err := DBMySQL.DB()
+	sqlDB, err := DB.DB()
 	if err != nil {
 		return fmt.Errorf("failed to get sql.DB: %w", err)
 	}
@@ -87,13 +90,13 @@ func Ping(ctx context.Context) error {
 	return sqlDB.PingContext(ctx)
 }
 
-// GetStats 获取数据库连接池统计信息
+// GetStats 获取数据库连接池统计信息 (函数体无需修改)
 func GetStats() (map[string]interface{}, error) {
-	if DBMySQL == nil {
+	if DB == nil {
 		return nil, fmt.Errorf("database not initialized")
 	}
 
-	sqlDB, err := DBMySQL.DB()
+	sqlDB, err := DB.DB()
 	if err != nil {
 		return nil, err
 	}

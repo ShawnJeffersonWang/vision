@@ -10,19 +10,32 @@ import (
 //var Conf = new(AppConfig)
 
 type AppConfig struct {
-	Name             string `mapstructure:"name"`
-	Mode             string `mapstructure:"mode"`
-	Version          string `mapstructure:"version"`
-	StartTime        string `mapstructure:"start_time"`
-	MachineID        int64  `mapstructure:"machine_id"`
-	Port             int    `mapstructure:"port"`
-	*LogConfig       `mapstructure:"log"`
-	*MySQLConfig     `mapstructure:"mysql"`
-	*DragonflyConfig `mapstructure:"dragonfly"`
-	*AiConfig        `mapstructure:"ai"`
-	*AliossConfig    `mapstructure:"alioss"`
-	*JWTConfig       `mapstructure:"jwt"`   // 新增JWT配置
-	*KafkaConfig     `mapstructure:"kafka"` // 新增 Kafka 配置
+	Name              string `mapstructure:"name"`
+	Mode              string `mapstructure:"mode"`
+	Version           string `mapstructure:"version"`
+	StartTime         string `mapstructure:"start_time"`
+	MachineID         int64  `mapstructure:"machine_id"`
+	Port              int    `mapstructure:"port"`
+	*LogConfig        `mapstructure:"log"`
+	*PostgreSQLConfig `mapstructure:"postgres"`
+	*MySQLConfig      `mapstructure:"mysql"`
+	*DragonflyConfig  `mapstructure:"dragonfly"`
+	*AiConfig         `mapstructure:"ai"`
+	*AliossConfig     `mapstructure:"alioss"`
+	*JWTConfig        `mapstructure:"jwt"`   // 新增JWT配置
+	*KafkaConfig      `mapstructure:"kafka"` // 新增 Kafka 配置
+	*PulsarConfig     `mapstructure:"pulsar"`
+}
+
+// PostgreSQLConfig 定义了 PostgreSQL 数据库的配置
+type PostgreSQLConfig struct {
+	Host         string `mapstructure:"host"`
+	Port         int    `mapstructure:"port"`
+	User         string `mapstructure:"user"`
+	Password     string `mapstructure:"password"`
+	DBName       string `mapstructure:"dbname"` // 习惯上使用 DBName 而非 DB
+	MaxOpenConns int    `mapstructure:"max_open_conns"`
+	MaxIdleConns int    `mapstructure:"max_idle_conns"`
 }
 
 type MySQLConfig struct {
@@ -53,7 +66,30 @@ type DragonflyConfig struct {
 	MinIdleConns int    `mapstructure:"min_idle_conns"`
 }
 
-// 新增：Kafka 配置结构体
+// RocketMQConfig 定义了与 RocketMQ 服务交互所需的配置
+type RocketMQConfig struct {
+	Enabled           bool     `mapstructure:"enabled"`             // 是否启用 RocketMQ
+	NameServerAddrs   []string `mapstructure:"name_server_addrs"`   // Name Server 地址列表 (例如: ["rmqnamesrv:9876"])
+	TopicPostCreation string   `mapstructure:"topic_post_creation"` // 发布帖子的主题
+	GroupPostCreation string   `mapstructure:"group_post_creation"` // 消费者组 ID
+
+	// 可选：其他客户端配置
+	SendRetryTimes int           `mapstructure:"send_retry_times"` // 发送重试次数
+	SendTimeout    time.Duration `mapstructure:"send_timeout"`     // 发送超时时间
+	ConsumeTimeout time.Duration `mapstructure:"consume_timeout"`  // 消费超时时间
+}
+
+// PulsarConfig 定义了与 Pulsar 服务交互所需的配置
+type PulsarConfig struct {
+	Enabled                  bool   `mapstructure:"enabled"`                    // 是否启用 Pulsar
+	ServiceURL               string `mapstructure:"service_url"`                // Pulsar 服务地址 (例如: "pulsar://pulsar:6650")
+	TopicPostCreation        string `mapstructure:"topic_post_creation"`        // 发布帖子的主题
+	SubscriptionPostCreation string `mapstructure:"subscription_post_creation"` // 消费订阅名称
+	// 可选：其他客户端配置
+	ConnectionTimeout time.Duration `mapstructure:"connection_timeout"` // 连接超时时间
+	SendTimeout       time.Duration `mapstructure:"send_timeout"`       // 写入超时时间
+}
+
 type KafkaConfig struct {
 	Enabled           bool     `mapstructure:"enabled"`             // 是否启用 Kafka
 	Brokers           []string `mapstructure:"brokers"`             // Kafka 地址列表（例如：["kafka:9092"]）
