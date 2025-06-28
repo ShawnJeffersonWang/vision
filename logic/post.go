@@ -2,8 +2,8 @@ package logic
 
 import (
 	"agricultural_vision/dao"
+	"agricultural_vision/models/proto"
 	"agricultural_vision/pkg/snowflake"
-	"agricultural_vision/proto"
 	"agricultural_vision/service/kafka"
 	"errors"
 	"github.com/google/uuid"

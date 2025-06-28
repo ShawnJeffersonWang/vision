@@ -1,5 +1,5 @@
 .idea
-conf
+conf/config.yaml
 tmp
 init.sql
 .env

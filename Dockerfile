@@ -34,7 +34,7 @@ FROM alpine:3.22
 WORKDIR /app
 
 # 复制脚本和配置文件到工作目录
-COPY ./wait-for.sh ./wait-for.sh
+COPY ./scripts/wait-for.sh ./wait-for.sh
 COPY ./conf ./conf
 
 # 从builder镜像中把可执行文件拷贝到当前工作目录

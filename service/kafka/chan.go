@@ -2,7 +2,7 @@ package kafka
 
 import (
 	"agricultural_vision/constants"
-	"agricultural_vision/proto"
+	"agricultural_vision/models/proto"
 	"agricultural_vision/settings"
 	"context"
 	"errors"

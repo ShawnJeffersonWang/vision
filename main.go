@@ -62,8 +62,8 @@ func setupApp(ctx context.Context) error {
 		return fmt.Errorf("init sql table failed: %w", err)
 	}
 
-	// 初始化 Dragonfly
-	if err := redis.Init(settings.Conf.DragonflyConfig); err != nil {
+	// 初始化 Redis
+	if err := redis.Init(settings.Conf.RedisConfig); err != nil {
 		return fmt.Errorf("init redis failed: %w", err)
 	}
 

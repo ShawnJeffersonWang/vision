@@ -19,6 +19,7 @@ type AppConfig struct {
 	*LogConfig        `mapstructure:"log"`
 	*PostgreSQLConfig `mapstructure:"postgres"`
 	*MySQLConfig      `mapstructure:"mysql"`
+	*RedisConfig      `mapstructure:"redis"`
 	*DragonflyConfig  `mapstructure:"dragonfly"`
 	*AiConfig         `mapstructure:"ai"`
 	*AliossConfig     `mapstructure:"alioss"`

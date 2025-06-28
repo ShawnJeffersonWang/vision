@@ -4,7 +4,7 @@ import (
 	"agricultural_vision/dao"
 	"agricultural_vision/dao/redis"
 	"agricultural_vision/models/entity"
-	"agricultural_vision/proto"
+	"agricultural_vision/models/proto"
 	"agricultural_vision/settings"
 	"context"
 	"encoding/json"
