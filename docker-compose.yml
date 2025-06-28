@@ -35,29 +35,29 @@ services:
   # ---------------------------
   # MySQL 服务（数据库）
   # ---------------------------
-  mysql:
-    image: "mysql:8.0"
-    ports:
-      - "3306:3306"
-    command: [ "mysqld", "--default-authentication-plugin=mysql_native_password", "--bind-address=0.0.0.0", "--init-file=/docker-entrypoint-initdb.d/init_mysql.sql" ]
-    environment:
-      MYSQL_ROOT_PASSWORD: "325523"
-      MYSQL_DATABASE: "agricultural_vision"
-      MYSQL_ROOT_HOST: "%"  # 允许root从任何主机连接
-      TZ: Asia/Shanghai                        # 设置时区
-    volumes:
-      # 新增：将命名卷 mysql-data 挂载到容器的 /var/lib/mysql 目录
-      - mysql-data:/var/lib/mysql
-      # 保留：初始化脚本的挂载
-      - ./init_mysql.sql:/docker-entrypoint-initdb.d/init_mysql.sql
-    healthcheck:
-      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p325523" ]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 30s
-    networks:
-      - app-network
+#  mysql:
+#    image: "mysql:8.0"
+#    ports:
+#      - "3306:3306"
+#    command: [ "mysqld", "--default-authentication-plugin=mysql_native_password", "--bind-address=0.0.0.0", "--init-file=/docker-entrypoint-initdb.d/init_mysql.sql" ]
+#    environment:
+#      MYSQL_ROOT_PASSWORD: "325523"
+#      MYSQL_DATABASE: "agricultural_vision"
+#      MYSQL_ROOT_HOST: "%"  # 允许root从任何主机连接
+#      TZ: Asia/Shanghai                        # 设置时区
+#    volumes:
+#      # 新增：将命名卷 mysql-data 挂载到容器的 /var/lib/mysql 目录
+#      - mysql-data:/var/lib/mysql
+#      # 保留：初始化脚本的挂载
+#      - ./init_mysql.sql:/docker-entrypoint-initdb.d/init_mysql.sql
+#    healthcheck:
+#      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p325523" ]
+#      interval: 10s
+#      timeout: 5s
+#      retries: 10
+#      start_period: 30s
+#    networks:
+#      - app-network
   # ---------------------------
   # PostgreSQL 服务（数据库）
   # ---------------------------
