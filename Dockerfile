@@ -1,14 +1,16 @@
-FROM golang:1.24-alpine AS builder
+FROM golang:1.25-alpine AS builder
 
 # 查看Go版本
 RUN go version
 
 # 为我们的镜像设置必要的环境变量
+# 启用新的JSON实现和新的垃圾收集器
 ENV GO111MODULE=on \
     GOPROXY=https://goproxy.cn,direct \
     CGO_ENABLED=0 \
     GOOS=linux \
-    GOARCH=amd64
+    GOARCH=amd64 \
+    GOEXPERIMENT=jsonv2,greenteagc
 
 # 移动到工作目录：/build
 WORKDIR /build
@@ -50,7 +52,8 @@ COPY --from=builder /build/agricultural_vision ./
 #    && rm -rf /var/lib/apt/lists/*
 
 # 安装必要的运行时依赖，包括CA证书
-RUN apk --no-cache add \
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apk/repositories \
+    && apk --no-cache add \
     ca-certificates \
     netcat-openbsd \
     tzdata \

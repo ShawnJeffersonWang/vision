@@ -3,7 +3,7 @@ services:
   # Redis 服务（缓存）
   # ---------------------------
   redis:
-    image: "redis:8.0"
+    image: "redis:latest"
     ports:
       - "6379:6379"
     healthcheck:
@@ -224,10 +224,10 @@ services:
 #      - app-network
 
   # ---------------------------
-  # Pulsar 3.3 服务 (单机模式)
+  # Pulsar 服务 (单机模式)
   # ---------------------------
   pulsar:
-    image: apachepulsar/pulsar:3.3.7
+    image: apachepulsar/pulsar:latest
     container_name: pulsar
     ports:
       - "6650:6650"  # Pulsar 二进制协议端口

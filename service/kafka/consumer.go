@@ -9,11 +9,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
+
 	"github.com/segmentio/kafka-go"
 	"go.uber.org/zap"
 	protobuf "google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
-	"time"
 )
 
 // Consumer Kafka 消费者结构体（带上下文）

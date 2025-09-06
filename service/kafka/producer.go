@@ -6,6 +6,7 @@ import (
 	"agricultural_vision/settings"
 	"context"
 	"encoding/json"
+
 	"github.com/segmentio/kafka-go"
 	protobuf "google.golang.org/protobuf/proto" // 导入 Protobuf 包
 )
