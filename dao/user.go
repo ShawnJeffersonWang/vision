@@ -1,14 +1,14 @@
 package dao
 
 import (
-	"agricultural_vision/dao/postgres"
-	"agricultural_vision/models/response"
 	"errors"
+	"vision/dao/postgres"
+	"vision/models/response"
 
 	"gorm.io/gorm"
 
-	"agricultural_vision/constants"
-	"agricultural_vision/models/entity"
+	"vision/constants"
+	"vision/models/entity"
 )
 
 // 查询邮箱是否已注册

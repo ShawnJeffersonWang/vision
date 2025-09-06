@@ -6,8 +6,8 @@ import (
 
 	"github.com/go-redis/redis"
 
-	"agricultural_vision/constants"
-	"agricultural_vision/models/request"
+	"vision/constants"
+	"vision/models/request"
 )
 
 // 新建帖子

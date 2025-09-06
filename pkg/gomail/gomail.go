@@ -5,7 +5,7 @@ import (
 	"math/rand"
 	"time"
 
-	"agricultural_vision/constants"
+	"vision/constants"
 
 	"github.com/patrickmn/go-cache"
 	"gopkg.in/gomail.v2"

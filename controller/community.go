@@ -1,16 +1,16 @@
 package controller
 
 import (
-	"agricultural_vision/models/request"
 	"errors"
 	"net/http"
 	"strconv"
+	"vision/models/request"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 
-	"agricultural_vision/constants"
-	"agricultural_vision/logic"
+	"vision/constants"
+	"vision/logic"
 )
 
 // 社区模块

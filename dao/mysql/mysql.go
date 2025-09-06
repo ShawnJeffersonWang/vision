@@ -12,7 +12,7 @@ import (
 	"gorm.io/gorm/logger"
 	"gorm.io/gorm/schema"
 
-	"agricultural_vision/settings"
+	"vision/settings"
 )
 
 var DBMySQL *gorm.DB

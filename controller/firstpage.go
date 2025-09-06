@@ -1,13 +1,13 @@
 package controller
 
 import (
-	"agricultural_vision/dao"
 	"net/http"
+	"vision/dao"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 
-	"agricultural_vision/constants"
+	"vision/constants"
 )
 
 func GetNewsHandler(c *gin.Context) {

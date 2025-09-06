@@ -9,9 +9,9 @@ import (
 
 	"go.uber.org/zap"
 
-	"agricultural_vision/constants"
-	"agricultural_vision/models/response"
-	"agricultural_vision/settings"
+	"vision/constants"
+	"vision/models/response"
+	"vision/settings"
 )
 
 var userConversations = make(map[int64]map[int64]*response.Conversation) // 使用 map 保存每个用户的不同ai模型的对话历史

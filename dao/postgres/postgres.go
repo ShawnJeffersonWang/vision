@@ -12,7 +12,7 @@ import (
 	"gorm.io/gorm/logger"
 	"gorm.io/gorm/schema"
 
-	"agricultural_vision/settings" // 假设您的 settings 包路径
+	"vision/settings" // 假设您的 settings 包路径
 )
 
 var DB *gorm.DB

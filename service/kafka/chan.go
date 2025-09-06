@@ -1,15 +1,15 @@
 package kafka
 
 import (
-	"agricultural_vision/constants"
-	"agricultural_vision/models/proto"
-	"agricultural_vision/settings"
 	"context"
 	"errors"
 	"github.com/segmentio/kafka-go"
 	"go.uber.org/zap"
 	protobuf "google.golang.org/protobuf/proto"
 	"sync"
+	"vision/constants"
+	"vision/models/proto"
+	"vision/settings"
 )
 
 // kafka/producer.go

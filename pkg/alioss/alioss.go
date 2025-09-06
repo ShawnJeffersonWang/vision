@@ -6,7 +6,7 @@ import (
 
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
 
-	"agricultural_vision/settings"
+	"vision/settings"
 )
 
 // 初始化oss服务

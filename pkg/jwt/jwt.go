@@ -1,9 +1,9 @@
 package jwt
 
 import (
-	"agricultural_vision/settings"
 	"errors"
 	"time"
+	"vision/settings"
 
 	"github.com/golang-jwt/jwt/v5"
 )

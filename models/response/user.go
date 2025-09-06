@@ -1,6 +1,6 @@
 package response
 
-import "agricultural_vision/models/entity"
+import "vision/models/entity"
 
 // 用户详情
 type UserHomePageResponse struct {

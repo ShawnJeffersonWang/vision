@@ -13,7 +13,7 @@ import (
 	enTranslations "github.com/go-playground/validator/v10/translations/en"
 	zhTranslations "github.com/go-playground/validator/v10/translations/zh"
 
-	"agricultural_vision/models/request"
+	"vision/models/request"
 )
 
 // 定义一个全局翻译器

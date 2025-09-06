@@ -1,15 +1,15 @@
 package middleware
 
 import (
-	"agricultural_vision/dao"
 	"go.uber.org/zap"
 	"net/http"
 	"strings"
+	"vision/dao"
 
 	"github.com/gin-gonic/gin"
 
-	"agricultural_vision/constants"
-	"agricultural_vision/pkg/jwt"
+	"vision/constants"
+	"vision/pkg/jwt"
 )
 
 // 基于JWT的认证中间件，对请求头中的token进行校验，并将用户id放在请求的上下文上

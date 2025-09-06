@@ -1,8 +1,8 @@
 package utils
 
 import (
-	"agricultural_vision/dao/postgres"
-	"agricultural_vision/models/entity"
+	"vision/dao/postgres"
+	"vision/models/entity"
 )
 
 func InitSqlTable() (err error) {

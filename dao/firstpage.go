@@ -1,8 +1,8 @@
 package dao
 
 import (
-	"agricultural_vision/dao/postgres"
-	"agricultural_vision/models/entity"
+	"vision/dao/postgres"
+	"vision/models/entity"
 )
 
 func GetNews() (news []entity.News, err error) {

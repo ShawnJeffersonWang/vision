@@ -1,13 +1,13 @@
 package routers
 
 import (
-	"agricultural_vision/logger"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"vision/logger"
 
-	"agricultural_vision/controller"
-	"agricultural_vision/middleware"
+	"vision/controller"
+	"vision/middleware"
 )
 
 func SetupRouter(mode string) *gin.Engine {

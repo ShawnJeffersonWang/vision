@@ -1,8 +1,6 @@
 package controller
 
 import (
-	"agricultural_vision/dao/postgres"
-	"agricultural_vision/settings"
 	"errors"
 	"fmt"
 	"mime/multipart"
@@ -10,17 +8,19 @@ import (
 	"path/filepath"
 	"strconv"
 	"time"
+	"vision/dao/postgres"
+	"vision/settings"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 
-	"agricultural_vision/constants"
-	"agricultural_vision/logic"
-	"agricultural_vision/middleware"
-	"agricultural_vision/models/entity"
-	"agricultural_vision/models/request"
-	"agricultural_vision/pkg/alioss"
-	"agricultural_vision/pkg/gomail"
+	"vision/constants"
+	"vision/logic"
+	"vision/middleware"
+	"vision/models/entity"
+	"vision/models/request"
+	"vision/pkg/alioss"
+	"vision/pkg/gomail"
 )
 
 // 用户注册

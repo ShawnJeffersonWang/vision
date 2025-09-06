@@ -2,7 +2,7 @@ package redis
 
 // redis key 注意使用命名空间
 const (
-	Prefix = "agricultural_vision:" // 项目 key 前缀
+	Prefix = "vision:" // 项目 key 前缀
 
 	// 帖子相关
 	KeyPostTimeZSet    = "post:time"   // zset; key=post:time, 成员=postID, 分数=发帖时间

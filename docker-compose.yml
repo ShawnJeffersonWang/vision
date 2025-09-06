@@ -41,7 +41,7 @@ services:
 #    command: [ "mysqld", "--default-authentication-plugin=mysql_native_password", "--bind-address=0.0.0.0", "--init-file=/docker-entrypoint-initdb.d/init_mysql.sql" ]
 #    environment:
 #      MYSQL_ROOT_PASSWORD: "325523"
-#      MYSQL_DATABASE: "agricultural_vision"
+#      MYSQL_DATABASE: "vision"
 #      MYSQL_ROOT_HOST: "%"  # 允许root从任何主机连接
 #      TZ: Asia/Shanghai                        # 设置时区
 #    volumes:

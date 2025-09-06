@@ -6,7 +6,7 @@ import (
 )
 
 // 对密码进行加密的盐
-const secret = "agricultural_vision"
+const secret = "vision"
 
 // 对密码进行加密
 func EncryptPassword(oPassword string) string {

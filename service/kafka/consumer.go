@@ -1,15 +1,15 @@
 package kafka
 
 import (
-	"agricultural_vision/dao"
-	"agricultural_vision/dao/redis"
-	"agricultural_vision/models/entity"
-	"agricultural_vision/models/proto"
-	"agricultural_vision/settings"
 	"context"
 	"encoding/json"
 	"fmt"
 	"time"
+	"vision/dao"
+	"vision/dao/redis"
+	"vision/models/entity"
+	"vision/models/proto"
+	"vision/settings"
 
 	"github.com/segmentio/kafka-go"
 	"go.uber.org/zap"

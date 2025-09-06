@@ -1,14 +1,14 @@
 package dao
 
 import (
-	"agricultural_vision/dao/postgres"
 	"errors"
+	"vision/dao/postgres"
 
 	"gorm.io/gorm"
 
-	"agricultural_vision/constants"
-	"agricultural_vision/models/entity"
-	"agricultural_vision/models/response"
+	"vision/constants"
+	"vision/models/entity"
+	"vision/models/response"
 )
 
 // CreateCommunity 创建社区

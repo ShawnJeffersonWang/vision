@@ -2,9 +2,9 @@
 package dao
 
 import (
-	"agricultural_vision/dao/postgres"
-	"agricultural_vision/models/entity"
 	"time"
+	"vision/dao/postgres"
+	"vision/models/entity"
 )
 
 // RecordLoginHistory 记录登录历史

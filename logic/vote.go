@@ -1,16 +1,16 @@
 package logic
 
 import (
-	"agricultural_vision/dao"
 	"errors"
 	"strconv"
+	"vision/dao"
 
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 
-	"agricultural_vision/constants"
-	"agricultural_vision/dao/redis"
-	"agricultural_vision/models/request"
+	"vision/constants"
+	"vision/dao/redis"
+	"vision/models/request"
 )
 
 // 给帖子投票

@@ -5,7 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"agricultural_vision/constants"
+	"vision/constants"
 )
 
 //封装响应信息

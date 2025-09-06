@@ -5,7 +5,7 @@ import (
 
 	"github.com/go-redis/redis"
 
-	"agricultural_vision/constants"
+	"vision/constants"
 )
 
 /*

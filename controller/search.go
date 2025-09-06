@@ -1,17 +1,17 @@
 package controller
 
 import (
-	"agricultural_vision/dao/postgres"
 	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
+	"vision/dao/postgres"
 
 	"github.com/gin-gonic/gin"
 
-	"agricultural_vision/constants"
-	"agricultural_vision/models/entity"
-	"agricultural_vision/models/response"
+	"vision/constants"
+	"vision/models/entity"
+	"vision/models/response"
 )
 
 // 关键词搜索

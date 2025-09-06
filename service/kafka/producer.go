@@ -1,11 +1,11 @@
 package kafka
 
 import (
-	"agricultural_vision/constants"
-	"agricultural_vision/models/proto"
-	"agricultural_vision/settings"
 	"context"
 	"encoding/json"
+	"vision/constants"
+	"vision/models/proto"
+	"vision/settings"
 
 	"github.com/segmentio/kafka-go"
 	protobuf "google.golang.org/protobuf/proto" // 导入 Protobuf 包

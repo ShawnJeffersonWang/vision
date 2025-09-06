@@ -3,7 +3,7 @@ syntax = "proto3";
 package agricultural_vision.kafka;
 
 // 指定生成的 Go 代码的包路径
-option go_package = "agricultural_vision/proto;proto";
+option go_package = "vision/proto;proto";
 
 import "google/protobuf/timestamp.proto";
 

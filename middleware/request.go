@@ -3,7 +3,7 @@ package middleware
 import (
 	"github.com/gin-gonic/gin"
 
-	"agricultural_vision/constants"
+	"vision/constants"
 )
 
 // 从请求上下文中获取当前用户ID

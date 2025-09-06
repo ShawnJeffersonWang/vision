@@ -1,11 +1,11 @@
 package logic
 
 import (
-	"agricultural_vision/constants"
-	"agricultural_vision/dao"
-	"agricultural_vision/models/entity"
-	"agricultural_vision/models/request"
-	"agricultural_vision/models/response"
+	"vision/constants"
+	"vision/dao"
+	"vision/models/entity"
+	"vision/models/request"
+	"vision/models/response"
 )
 
 // CreateCommunity 创建社区

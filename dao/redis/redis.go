@@ -8,7 +8,7 @@ import (
 
 	"github.com/go-redis/redis"
 
-	"agricultural_vision/settings"
+	"vision/settings"
 )
 
 var (

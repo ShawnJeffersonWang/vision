@@ -14,7 +14,7 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
-	"agricultural_vision/settings"
+	"vision/settings"
 )
 
 var lg *zap.Logger

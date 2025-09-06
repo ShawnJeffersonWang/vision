@@ -1,27 +1,28 @@
 package main
 
 import (
-	"agricultural_vision/dao/postgres"
-	"agricultural_vision/pkg/jwt"
-	"agricultural_vision/pkg/snowflake"
-	"agricultural_vision/service/kafka"
 	"context"
 	"errors"
 	"fmt"
-	"go.uber.org/zap"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+	"vision/dao/postgres"
+	"vision/pkg/jwt"
+	"vision/pkg/snowflake"
+	"vision/service/kafka"
 
-	"agricultural_vision/controller"
-	"agricultural_vision/dao/redis"
-	"agricultural_vision/logger"
-	"agricultural_vision/routers"
-	"agricultural_vision/settings"
-	"agricultural_vision/utils"
+	"go.uber.org/zap"
+
+	"vision/controller"
+	"vision/dao/redis"
+	"vision/logger"
+	"vision/routers"
+	"vision/settings"
+	"vision/utils"
 )
 
 func main() {

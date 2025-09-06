@@ -1,8 +1,6 @@
 package controller
 
 import (
-	"agricultural_vision/pkg/alioss"
-	"agricultural_vision/settings"
 	"errors"
 	"fmt"
 	"mime/multipart"
@@ -10,14 +8,16 @@ import (
 	"path/filepath"
 	"strconv"
 	"time"
+	"vision/pkg/alioss"
+	"vision/settings"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 
-	"agricultural_vision/constants"
-	"agricultural_vision/logic"
-	"agricultural_vision/middleware"
-	"agricultural_vision/models/request"
+	"vision/constants"
+	"vision/logic"
+	"vision/middleware"
+	"vision/models/request"
 )
 
 // CreatePostHandlerAsync 异步创建帖子的 HTTP 处理函数

@@ -1,18 +1,18 @@
 package logic
 
 import (
-	"agricultural_vision/constants"
-	"agricultural_vision/dao"
-	"agricultural_vision/dao/redis"
-	"agricultural_vision/models/entity"
-	"agricultural_vision/models/request"
-	"agricultural_vision/models/response"
-	"agricultural_vision/pkg/bcrypt"
-	"agricultural_vision/pkg/gomail"
-	auth "agricultural_vision/pkg/jwt"
 	"fmt"
 	"go.uber.org/zap"
 	"time"
+	"vision/constants"
+	"vision/dao"
+	"vision/dao/redis"
+	"vision/models/entity"
+	"vision/models/request"
+	"vision/models/response"
+	"vision/pkg/bcrypt"
+	"vision/pkg/gomail"
+	auth "vision/pkg/jwt"
 )
 
 // 用户注册

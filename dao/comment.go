@@ -1,12 +1,12 @@
 package dao
 
 import (
-	"agricultural_vision/dao/postgres"
 	"fmt"
 	"strings"
+	"vision/dao/postgres"
 
-	"agricultural_vision/constants"
-	"agricultural_vision/models/entity"
+	"vision/constants"
+	"vision/models/entity"
 )
 
 // 创建评论

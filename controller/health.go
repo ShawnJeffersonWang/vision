@@ -1,13 +1,13 @@
 package controller
 
 import (
-	"agricultural_vision/dao/postgres"
 	"context"
 	"net/http"
 	"time"
+	"vision/dao/postgres"
 
-	"agricultural_vision/dao/redis"
 	"github.com/gin-gonic/gin"
+	"vision/dao/redis"
 )
 
 // HealthCheckHandler 健康检查处理函数
@@ -17,7 +17,7 @@ func HealthCheckHandler(c *gin.Context) {
 
 	health := gin.H{
 		"status":    "healthy",
-		"service":   "agricultural_vision",
+		"service":   "vision",
 		"timestamp": time.Now().Unix(),
 		"checks":    gin.H{},
 	}

@@ -9,10 +9,10 @@ import (
 	"github.com/go-playground/validator/v10"
 	"go.uber.org/zap"
 
-	"agricultural_vision/constants"
-	"agricultural_vision/logic"
-	"agricultural_vision/middleware"
-	"agricultural_vision/models/request"
+	"vision/constants"
+	"vision/logic"
+	"vision/middleware"
+	"vision/models/request"
 )
 
 // 创建评论
