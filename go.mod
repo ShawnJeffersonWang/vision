@@ -1,4 +1,4 @@
-module agricultural_vision
+module vision
 
 go 1.25
 
