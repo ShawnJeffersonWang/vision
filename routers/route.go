@@ -1,10 +1,11 @@
 package routers
 
 import (
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"vision/logger"
+
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
 
 	"vision/controller"
 	"vision/middleware"

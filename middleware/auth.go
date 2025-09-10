@@ -1,10 +1,11 @@
 package middleware
 
 import (
-	"go.uber.org/zap"
 	"net/http"
 	"strings"
 	"vision/dao"
+
+	"go.uber.org/zap"
 
 	"github.com/gin-gonic/gin"
 

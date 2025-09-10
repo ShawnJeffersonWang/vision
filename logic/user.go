@@ -2,7 +2,6 @@ package logic
 
 import (
 	"fmt"
-	"go.uber.org/zap"
 	"time"
 	"vision/constants"
 	"vision/dao"
@@ -13,6 +12,8 @@ import (
 	"vision/pkg/bcrypt"
 	"vision/pkg/gomail"
 	auth "vision/pkg/jwt"
+
+	"go.uber.org/zap"
 )
 
 // 用户注册
