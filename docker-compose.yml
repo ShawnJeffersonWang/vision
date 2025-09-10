@@ -85,49 +85,49 @@ services:
       - app-network
 
   # Nginx 负载均衡器
-#  nginx:
-#    image: nginx:alpine
-#    ports:
-#      - "80:80"
-#      - "443:443"  # 如果需要 HTTPS
-#    volumes:
-#      - ./conf/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-#      - ./conf/nginx/conf.d:/etc/nginx/conf.d:ro
-#    depends_on:
-#      - agricultural_vision_1
-#      - agricultural_vision_2
-#      - agricultural_vision_3
-#    networks:
-#      - app-network
-#    environment:
-#      - TZ=Asia/Shanghai  # 设置时区
-#    healthcheck:
-#      test: ["CMD-SHELL", "nginx -t || exit 1"]
-#      interval: 5s
-#      timeout: 5s
-#      retries: 3
-#      start_period: 10s
-
-  # ---------------------------
-  # Envoy 代理（API 网关）
-  # ---------------------------
-  envoy:
-    image: envoyproxy/envoy:v1.33-latest
+  nginx:
+    image: nginx:alpine
     ports:
-      - "80:10000"     # HTTP 端口
-      - "9901:9901"    # Envoy 管理界面
+      - "80:80"
+      - "443:443"  # 如果需要 HTTPS
     volumes:
-      - ./conf/envoy/envoy.yaml:/etc/envoy/envoy.yaml:ro
-    command: /usr/local/bin/envoy -c /etc/envoy/envoy.yaml
+      - ./conf/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./conf/nginx/conf.d:/etc/nginx/conf.d:ro
     depends_on:
       - agricultural_vision_1
       - agricultural_vision_2
       - agricultural_vision_3
-    restart: unless-stopped
     networks:
       - app-network
     environment:
       - TZ=Asia/Shanghai  # 设置时区
+    healthcheck:
+      test: ["CMD-SHELL", "nginx -t || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # ---------------------------
+  # Envoy 代理（API 网关）
+  # ---------------------------
+#  envoy:
+#    image: envoyproxy/envoy:v1.33-latest
+#    ports:
+#      - "80:10000"     # HTTP 端口
+#      - "9901:9901"    # Envoy 管理界面
+#    volumes:
+#      - ./conf/envoy/envoy.yaml:/etc/envoy/envoy.yaml:ro
+#    command: /usr/local/bin/envoy -c /etc/envoy/envoy.yaml
+#    depends_on:
+#      - agricultural_vision_1
+#      - agricultural_vision_2
+#      - agricultural_vision_3
+#    restart: unless-stopped
+#    networks:
+#      - app-network
+#    environment:
+#      - TZ=Asia/Shanghai  # 设置时区
     # --- Docker 容器健康检查 ---
 #    healthcheck:
 #      # 使用 curl 命令检查 Envoy 管理界面的 /ready 端点
@@ -226,38 +226,38 @@ services:
   # ---------------------------
   # Pulsar 服务 (单机模式)
   # ---------------------------
-  pulsar:
-    image: apachepulsar/pulsar:latest
-    container_name: pulsar
-    ports:
-      - "6650:6650"  # Pulsar 二进制协议端口
-      - "8080:8080"  # Pulsar 管理后台 HTTP 端口
-    command: >
-      /bin/bash -c
-      "bin/apply-config-from-env.py conf/standalone.conf &&
-       exec bin/pulsar standalone"
-    environment:
-      # -- Pulsar 配置 --
-      # 允许无认证的生产者/消费者连接
-      - PULSAR_PREFIX_authenticationEnabled=false
-      # 允许无认证的管理操作
-      - PULSAR_PREFIX_authorizationEnabled=false
-      # 允许在没有创建租户的情况下创建命名空间
-      - PULSAR_PREFIX_allowAutoTopicCreationType=non-partitioned
-      # 默认创建非分区主题
-      - PULSAR_PREFIX_brokerDeleteInactiveTopicsEnabled=false
-      # 不自动删除不活跃的主题
-      - TZ=Asia/Shanghai # 设置时区
-    networks:
-      - app-network
-    healthcheck:
-      # 使用 pulsar-admin 工具检查 broker 的健康状况
-      test: ["CMD-SHELL", "curl -s http://localhost:8080/admin/v2/brokers/healthcheck || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    volumes:
-      - pulsar-data:/pulsar/data
+#  pulsar:
+#    image: apachepulsar/pulsar:latest
+#    container_name: pulsar
+#    ports:
+#      - "6650:6650"  # Pulsar 二进制协议端口
+#      - "8080:8080"  # Pulsar 管理后台 HTTP 端口
+#    command: >
+#      /bin/bash -c
+#      "bin/apply-config-from-env.py conf/standalone.conf &&
+#       exec bin/pulsar standalone"
+#    environment:
+#      # -- Pulsar 配置 --
+#      # 允许无认证的生产者/消费者连接
+#      - PULSAR_PREFIX_authenticationEnabled=false
+#      # 允许无认证的管理操作
+#      - PULSAR_PREFIX_authorizationEnabled=false
+#      # 允许在没有创建租户的情况下创建命名空间
+#      - PULSAR_PREFIX_allowAutoTopicCreationType=non-partitioned
+#      # 默认创建非分区主题
+#      - PULSAR_PREFIX_brokerDeleteInactiveTopicsEnabled=false
+#      # 不自动删除不活跃的主题
+#      - TZ=Asia/Shanghai # 设置时区
+#    networks:
+#      - app-network
+#    healthcheck:
+#      # 使用 pulsar-admin 工具检查 broker 的健康状况
+#      test: ["CMD-SHELL", "curl -s http://localhost:8080/admin/v2/brokers/healthcheck || exit 1"]
+#      interval: 10s
+#      timeout: 5s
+#      retries: 5
+#    volumes:
+#      - pulsar-data:/pulsar/data
   # ---------------------------
   # Kafka 4.0 服务（无 ZooKeeper）
   # ---------------------------
