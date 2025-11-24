@@ -61,21 +61,27 @@ services:
   # PostgreSQL 服务（数据库）
   # ---------------------------
   postgres:
-    image: "postgres:17"  # 使用官方的 PostgreSQL 镜像，推荐指定一个明确的主版本
+    image: "postgres:18"  # 使用官方的 PostgreSQL 镜像
     ports:
-      - "5432:5432"      # PostgreSQL 的默认端口是 5432
+      - "5432:5432"
     environment:
-      POSTGRES_USER: "root"                     # 设置超级用户的用户名
-      POSTGRES_PASSWORD: "325523"               # 设置超级用户的密码
-      POSTGRES_DB: "agricultural_vision"        # 容器启动时要创建的数据库名称
-      TZ: Asia/Shanghai                         # 设置时区
+      POSTGRES_USER: "root"
+      POSTGRES_PASSWORD: "325523"
+      POSTGRES_DB: "agricultural_vision"
+      TZ: Asia/Shanghai
+      # -----------------------------------------------------------------------
+      # 修复说明 (基于 PR #1259 / Issue #37):
+      # PostgreSQL 18 改变了默认的数据存储位置。
+      # 由于您的数据卷中似乎已经存在数据（位于根目录），新镜像会报错并停止。
+      # 解决方案：显式将 PGDATA 设置回旧的默认路径，强制其使用兼容模式。
+      # -----------------------------------------------------------------------
+      PGDATA: "/var/lib/postgresql/data"
     volumes:
-      # 新增：将命名卷 postgres-data 挂载到容器的 /var/lib/postgresql/data 目录
+      # 将挂载点改回标准的 /data 子目录，以配合上面的 PGDATA 环境变量
       - postgres-data:/var/lib/postgresql/data
       # 保留：初始化脚本的挂载
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql # 挂载初始化脚本
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
-      # 使用 pg_isready 工具来检查 PostgreSQL 服务是否就绪
       test: [ "CMD-SHELL", "pg_isready -U root -d agricultural_vision" ]
       interval: 10s
       timeout: 5s
@@ -141,27 +147,27 @@ services:
   # ---------------------------
   # etcd 服务（用于服务发现/配置中心）
   # ---------------------------
-  etcd:
-    image: bitnami/etcd:3.6
-    container_name: etcd
-    ports:
-      - "2379:2379"
-    environment:
-      - ETCD_NAME=etcd-node1          # 节点名称（唯一标识）
-      - ETCD_ADVERTISE_CLIENT_URLS=http://etcd:2379
-      - ETCD_LISTEN_CLIENT_URLS=http://0.0.0.0:2379
-      - ETCD_INITIAL_CLUSTER=etcd-node1=http://etcd:2380  # 与 ETCD_NAME 一致
-      - ETCD_INITIAL_ADVERTISE_PEER_URLS=http://etcd:2380
-      - ETCD_LISTEN_PEER_URLS=http://0.0.0.0:2380
-      - ALLOW_NONE_AUTHENTICATION=yes  # 开发环境允许无认证
-      - TZ=Asia/Shanghai  # 设置时区
-    networks:
-      - app-network
-    healthcheck:
-      test: ["CMD-SHELL", "etcdctl --endpoints=http://localhost:2379 endpoint health"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+#  etcd:
+#    image: bitnamicharts/etcd:latest
+#    container_name: etcd
+#    ports:
+#      - "2379:2379"
+#    environment:
+#      - ETCD_NAME=etcd-node1          # 节点名称（唯一标识）
+#      - ETCD_ADVERTISE_CLIENT_URLS=http://etcd:2379
+#      - ETCD_LISTEN_CLIENT_URLS=http://0.0.0.0:2379
+#      - ETCD_INITIAL_CLUSTER=etcd-node1=http://etcd:2380  # 与 ETCD_NAME 一致
+#      - ETCD_INITIAL_ADVERTISE_PEER_URLS=http://etcd:2380
+#      - ETCD_LISTEN_PEER_URLS=http://0.0.0.0:2380
+#      - ALLOW_NONE_AUTHENTICATION=yes  # 开发环境允许无认证
+#      - TZ=Asia/Shanghai  # 设置时区
+#    networks:
+#      - app-network
+#    healthcheck:
+#      test: ["CMD-SHELL", "etcdctl --endpoints=http://localhost:2379 endpoint health"]
+#      interval: 5s
+#      timeout: 5s
+#      retries: 5
 
   # ---------------------------
   # RocketMQ 5.3 服务
@@ -259,51 +265,45 @@ services:
 #    volumes:
 #      - pulsar-data:/pulsar/data
   # ---------------------------
-  # Kafka 4.0 服务（无 ZooKeeper）
+  # Kafka 服务 (使用 Apache 官方镜像)
   # ---------------------------
   kafka:
-    image: bitnami/kafka:4.0
+    image: apache/kafka:latest
     container_name: kafka
-    restart: unless-stopped # 1. [稳定性] 添加重启策略
+    restart: unless-stopped
     ports:
       - "9092:9092"
     environment:
-      # --- KRaft 模式核心配置 ---
-      - KAFKA_ENABLE_KRAFT=yes
-      - KAFKA_CFG_PROCESS_ROLES=controller,broker
-      - KAFKA_CFG_NODE_ID=1
-      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=1@kafka:9093
+      # --- KRaft 模式配置 (Apache 官方风格) ---
+      # 格式规则：KAFKA_ + 属性名(大写，点变下划线)
 
-      # --- 监听器配置 ---
-      - KAFKA_CFG_LISTENERS=CONTROLLER://:9093,PLAINTEXT://:9092
-      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
-      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
-      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      # 注意：这里必须填 kafka:9092，以便其他容器通过服务名访问
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
 
-      # --- 内部 Topic 配置 ---
-      - KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR=1
-      - KAFKA_CFG_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=1 # 建议也为事务日志设置副本因子
-      - KAFKA_CFG_TRANSACTION_STATE_LOG_MIN_ISR=1
-
-      # --- 优化配置 ---
-      - KAFKA_HEAP_OPTS=-Xms512m -Xmx512m             # 2. [资源] 设置JVM堆大小
-      - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true      # 3. [便利性] 允许自动创建Topic
-      - KAFKA_CFG_LOG_RETENTION_HOURS=24              # 4. [存储] 设置日志保留时间为24小时
-      - TZ=Asia/Shanghai
-
+      # --- 其他必要配置 ---
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      TZ: Asia/Shanghai
     networks:
       - app-network
-
     healthcheck:
-      # 5. [健壮性] 使用更可靠的健康检查命令
-      test: ["CMD-SHELL", "kafka-broker-api-versions.sh --bootstrap-server localhost:9092"]
-      interval: 15s
+      # 官方镜像的 bin 目录通常在 /opt/kafka/bin
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list"]
+      interval: 10s
       timeout: 10s
       retries: 5
-      start_period: 30s # 给Kafka足够的时间启动
-
+      start_period: 30s
     volumes:
-      - kafka-data:/bitnami/kafka
+      - kafka-data:/var/lib/kafka/data
 
   # 应用实例1
   agricultural_vision_1:
