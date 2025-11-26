@@ -7,7 +7,8 @@ import statistics
 import json
 
 # 配置
-URL = "http://115.190.145.150/api/v1/communityPost/posts/guest"
+# URL = "http://115.190.145.150/api/v1/communityPost/posts/guest"
+URL = "http://localhost/api/v1/communityPost/posts/guest"
 # URL = "http://192.168.49.2:30081/api/v1/communityPost/posts/guest"
 TOTAL_REQUESTS = 10000
 MAX_WORKERS = 100
