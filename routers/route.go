@@ -31,7 +31,7 @@ func SetupRouter(mode string) *gin.Engine {
 	}))
 
 	// 在 routers/routes.go 中添加（在其他路由之前）
-	r.GET("/health", controller.HealthCheckHandler)
+	//r.GET("/health", controller.HealthCheckHandler)
 	// 添加实例ID中间件
 	r.Use(middleware.InstanceIDMiddleware())
 
@@ -149,6 +149,30 @@ func SetupRouter(mode string) *gin.Engine {
 			// 查询用户点赞的帖子列表（分页）
 			userCommunityPost.GET("/likes", controller.GetUserLikedPostListHandler)
 		}
+	}
+
+	// 内容管理模块 (CMS) - 用于添加数据
+	// 建议使用 JWT 认证，甚至 Admin 权限认证
+	cmsGroup := r.Group("/cms")
+	cmsGroup.Use(middleware.JWTAuthMiddleware())
+	// 如果需要管理员权限，请取消注释下面这行:
+	// cmsGroup.Use(middleware.AdminAuthMiddleware())
+	{
+		// 通用素材上传 (用于上传 News.Image, Crop.Icon 等)
+		cmsGroup.POST("/upload", controller.UploadMaterialHandler)
+
+		// 添加新闻
+		cmsGroup.POST("/news", controller.AddNewsHandler)
+		// 添加谚语
+		cmsGroup.POST("/proverb", controller.AddProverbHandler)
+		// 添加农作物种类
+		cmsGroup.POST("/crop", controller.AddCropCategoryHandler)
+		// 添加农作物细节 (注意 URL 需要带参数 ?category_id=xxx)
+		cmsGroup.POST("/crop/detail", controller.AddCropDetailHandler)
+		// 添加视频链接
+		cmsGroup.POST("/video", controller.AddVideoHandler)
+		// 添加诗歌
+		cmsGroup.POST("/poetry", controller.AddPoetryHandler)
 	}
 
 	r.NoRoute(func(c *gin.Context) {

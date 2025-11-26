@@ -1,11 +1,8 @@
-# ----------------------------------------------------
-# Envoy 静态配置文件 (v3 API)
-# ----------------------------------------------------
 admin:
   address:
     socket_address:
       address: 0.0.0.0
-      port_value: 9901 # Envoy 管理界面端口
+      port_value: 9901
 
 static_resources:
   listeners:
@@ -13,7 +10,7 @@ static_resources:
       address:
         socket_address:
           address: 0.0.0.0
-          port_value: 10000 # 对外暴露的 HTTP 端口
+          port_value: 10000
       filter_chains:
         - filters:
             - name: envoy.filters.network.http_connection_manager
@@ -21,35 +18,40 @@ static_resources:
                 "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
                 stat_prefix: ingress_http
                 codec_type: AUTO
+                # --- 优化：添加访问日志，方便调试 ---
+                access_log:
+                  - name: envoy.access_loggers.stdout
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.access_loggers.stream.v3.StdoutAccessLog
                 route_config:
                   name: local_route
                   virtual_hosts:
                     - name: agricultural_vision_service
-                      domains: ["*"] # 匹配所有域名
+                      domains: ["*"]
                       routes:
                         - match:
-                            prefix: "/" # 匹配所有路径
+                            prefix: "/"
                           route:
-                            cluster: agricultural_vision_cluster # 路由到此集群
-                            timeout: 60s # 路由超时时间
-                            retry_policy: # 重试策略
-                              retry_on: "5xx" # 仅在后端返回 5xx 错误时重试
-                              num_retries: 3  # 最多重试3次
-                              per_try_timeout: 20s # 每次重试的超时时间
+                            cluster: agricultural_vision_cluster
+                            timeout: 60s
+                            retry_policy:
+                              retry_on: "5xx,connect-failure,refused-stream"
+                              num_retries: 3
+                              per_try_timeout: 20s
                 http_filters:
-                  - name: envoy.filters.http.cors # CORS 过滤器，处理跨域请求
+                  - name: envoy.filters.http.cors
                     typed_config:
                       "@type": type.googleapis.com/envoy.extensions.filters.http.cors.v3.Cors
-                  - name: envoy.filters.http.router # 路由过滤器，必须放在最后
+                  - name: envoy.filters.http.router
                     typed_config:
                       "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
 
   clusters:
     - name: agricultural_vision_cluster
       connect_timeout: 5s
-      type: STRICT_DNS # 使用 DNS 解析服务发现
+      type: STRICT_DNS
       dns_lookup_family: V4_ONLY
-      lb_policy: ROUND_ROBIN # 负载均衡策略：轮询
+      lb_policy: ROUND_ROBIN
       load_assignment:
         cluster_name: agricultural_vision_cluster
         endpoints:
@@ -57,25 +59,21 @@ static_resources:
               - endpoint:
                   address:
                     socket_address:
-                      address: agricultural_vision_1
-                      port_value: 8080
-              - endpoint:
-                  address:
-                    socket_address:
-                      address: agricultural_vision_2
-                      port_value: 8080
-              - endpoint:
-                  address:
-                    socket_address:
-                      address: agricultural_vision_3
+                      address: agricultural_vision
                       port_value: 8080
       
-      # --- 健康检查配置 ---
+      # --- 健康检查配置 (优化) ---
       health_checks:
-        - timeout: 5s             # 单次健康检查的超时时间
-          interval: 10s           # 健康检查的间隔时间
-          unhealthy_threshold: 2  # 连续2次失败则标记为不健康
-          healthy_threshold: 2    # 连续2次成功则标记为健康
+        - timeout: 5s
+          interval: 10s
+          unhealthy_threshold: 2
+          healthy_threshold: 2
+          # 优化：记录健康检查失败的日志
+          always_log_health_check_failures: true
           http_health_check:
-            path: "/health"       # 健康检查请求的 HTTP 路径
-            # expected_statuses: [ { start: 200, end: 299 } ] # (可选) 默认就是期望 200 OK
+            path: "/health"
+            # 优化：明确指定 Host 头，防止后端因缺失 Host 头而拒绝
+            host: "agricultural_vision"
+            expected_statuses:
+              - start: 200
+                end: 299

@@ -91,64 +91,59 @@ services:
       - app-network
 
   # Nginx 负载均衡器
-  nginx:
-    image: nginx:alpine
-    ports:
-      - "80:80"
-      - "443:443"  # 如果需要 HTTPS
-    volumes:
-      - ./conf/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./conf/nginx/conf.d:/etc/nginx/conf.d:ro
-    depends_on:
-      - agricultural_vision_1
-      - agricultural_vision_2
-      - agricultural_vision_3
-    networks:
-      - app-network
-    environment:
-      - TZ=Asia/Shanghai  # 设置时区
-    healthcheck:
-      test: ["CMD-SHELL", "nginx -t || exit 1"]
-      interval: 5s
-      timeout: 5s
-      retries: 3
-      start_period: 10s
-
-  # ---------------------------
-  # Envoy 代理（API 网关）
-  # ---------------------------
-#  envoy:
-#    image: envoyproxy/envoy:v1.33-latest
+#  nginx:
+#    image: nginx:alpine
 #    ports:
-#      - "80:10000"     # HTTP 端口
-#      - "9901:9901"    # Envoy 管理界面
+#      - "80:80"
+#      - "443:443"  # 如果需要 HTTPS
 #    volumes:
-#      - ./conf/envoy/envoy.yaml:/etc/envoy/envoy.yaml:ro
-#    command: /usr/local/bin/envoy -c /etc/envoy/envoy.yaml
+#      - ./conf/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+#      - ./conf/nginx/conf.d:/etc/nginx/conf.d:ro
 #    depends_on:
 #      - agricultural_vision_1
 #      - agricultural_vision_2
 #      - agricultural_vision_3
-#    restart: unless-stopped
 #    networks:
 #      - app-network
 #    environment:
 #      - TZ=Asia/Shanghai  # 设置时区
-    # --- Docker 容器健康检查 ---
 #    healthcheck:
-#      # 使用 curl 命令检查 Envoy 管理界面的 /ready 端点
-#      # -f: 当服务器返回错误时 (HTTP code >= 400)，curl 以非零状态码退出
-#      test: ["CMD", "curl", "-f", "http://localhost:9901/ready"]
-#      interval: 10s       # 每10秒检查一次
-#      timeout: 5s         # 检查超时时间5秒
-#      retries: 3          # 重试3次失败后，将容器标记为 unhealthy
-#      start_period: 15s   # 启动容器后，给予15秒的宽限期，在此期间即使检查失败也不会计入重试次数
+#      test: ["CMD-SHELL", "nginx -t || exit 1"]
+#      interval: 5s
+#      timeout: 5s
+#      retries: 3
+#      start_period: 10s
+
+  # ---------------------------
+  # Envoy 代理（API 网关）
+  # ---------------------------
+  envoy:
+    image: envoyproxy/envoy:v1.33-latest
+    ports:
+      - "80:10000"
+      - "9901:9901"
+    volumes:
+      - ./conf/envoy/envoy.yaml:/etc/envoy/envoy.yaml:ro
+    command: /usr/local/bin/envoy -c /etc/envoy/envoy.yaml --service-cluster agricultural_vision_proxy --service-node node1 --log-level info
+    depends_on:
+      - agricultural_vision
+    restart: unless-stopped
+    networks:
+      - app-network
+    environment:
+      - TZ=Asia/Shanghai
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9901/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
 
   # ---------------------------
   # etcd 服务（用于服务发现/配置中心）
   # ---------------------------
 #  etcd:
-#    image: bitnamicharts/etcd:latest
+#    image: bitnami/etcd:latest
 #    container_name: etcd
 #    ports:
 #      - "2379:2379"
@@ -305,10 +300,10 @@ services:
     volumes:
       - kafka-data:/var/lib/kafka/data
 
-  # 应用实例1
-  agricultural_vision_1:
+  # 应用实例
+  agricultural_vision:
     build: .
-    command: sh -c "/app/wait-for.sh redis:6379 mysql:3306 -- /app/agricultural_vision /app/conf/config.yaml"
+    command: sh -c "/app/wait-for.sh redis:6379 postgres:5432 -- /app/agricultural_vision /app/conf/config.yaml"
     depends_on:
       postgres:
         condition: service_healthy
@@ -326,44 +321,44 @@ services:
       - TZ=Asia/Shanghai  # 设置时区
 
   # 应用实例2
-  agricultural_vision_2:
-    build: .
-    command: sh -c "/app/wait-for.sh redis:6379 mysql:3306 -- /app/agricultural_vision /app/conf/config.yaml"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      kafka:
-        condition: service_healthy
-    expose:
-      - "8080"
-    networks:
-      - app-network
-    environment:
-      - GIN_MODE=release
-      - INSTANCE_NAME=vision-instance-2  # 设置实例名称
-      - TZ=Asia/Shanghai  # 设置时区
-
-  # 应用实例3
-  agricultural_vision_3:
-    build: .
-    command: sh -c "/app/wait-for.sh redis:6379 mysql:3306 -- /app/agricultural_vision /app/conf/config.yaml"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      kafka:
-        condition: service_healthy
-    expose:
-      - "8080"
-    networks:
-      - app-network
-    environment:
-      - GIN_MODE=release
-      - INSTANCE_NAME=vision-instance-3  # 设置实例名称
-      - TZ=Asia/Shanghai  # 设置时区
+#  agricultural_vision_2:
+#    build: .
+#    command: sh -c "/app/wait-for.sh redis:6379 mysql:3306 -- /app/agricultural_vision /app/conf/config.yaml"
+#    depends_on:
+#      postgres:
+#        condition: service_healthy
+#      redis:
+#        condition: service_healthy
+#      kafka:
+#        condition: service_healthy
+#    expose:
+#      - "8080"
+#    networks:
+#      - app-network
+#    environment:
+#      - GIN_MODE=release
+#      - INSTANCE_NAME=vision-instance-2  # 设置实例名称
+#      - TZ=Asia/Shanghai  # 设置时区
+#
+#  # 应用实例3
+#  agricultural_vision_3:
+#    build: .
+#    command: sh -c "/app/wait-for.sh redis:6379 mysql:3306 -- /app/agricultural_vision /app/conf/config.yaml"
+#    depends_on:
+#      postgres:
+#        condition: service_healthy
+#      redis:
+#        condition: service_healthy
+#      kafka:
+#        condition: service_healthy
+#    expose:
+#      - "8080"
+#    networks:
+#      - app-network
+#    environment:
+#      - GIN_MODE=release
+#      - INSTANCE_NAME=vision-instance-3  # 设置实例名称
+#      - TZ=Asia/Shanghai  # 设置时区
 
 # 定义网络和数据卷
 # ---------------------------
