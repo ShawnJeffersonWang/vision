@@ -30,7 +30,7 @@ RUN go build -ldflags="-w -s" -o agricultural_vision .
 # 接下来创建一个小镜像
 ###################
 #FROM debian:bookworm-slim
-FROM alpine:3.22
+FROM alpine:3.23
 
 # 设置工作目录
 WORKDIR /app
