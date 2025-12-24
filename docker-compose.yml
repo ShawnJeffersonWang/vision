@@ -93,45 +93,45 @@ services:
       - app-network
 
   # Nginx 负载均衡器
-#  nginx:
-#    image: nginx:alpine
-#    ports:
-#      - "80:80"
-#      - "443:443"  # 如果需要 HTTPS
-#    volumes:
-#      - ./conf/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-#      - ./conf/nginx/conf.d:/etc/nginx/conf.d:ro
-#    depends_on:
-#      - agricultural_vision
-#    networks:
-#      - app-network
-#    environment:
-#      - TZ=Asia/Shanghai  # 设置时区
-#    healthcheck:
-#      test: ["CMD-SHELL", "nginx -t || exit 1"]
-#      interval: 5s
-#      timeout: 5s
-#      retries: 3
-#      start_period: 10s
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"  # 如果需要 HTTPS
+    volumes:
+      - ./conf/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./conf/nginx/conf.d:/etc/nginx/conf.d:ro
+    depends_on:
+      - agricultural_vision
+    networks:
+      - app-network
+    environment:
+      - TZ=Asia/Shanghai  # 设置时区
+    healthcheck:
+      test: ["CMD-SHELL", "nginx -t || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
   # ---------------------------
   # Envoy 代理（API 网关）
   # ---------------------------
-  envoy:
-    image: envoyproxy/envoy:v1.33-latest
-    ports:
-      - "80:10000"
-      - "9901:9901"
-    volumes:
-      - ./conf/envoy/envoy.yaml:/etc/envoy/envoy.yaml:ro
-    command: /usr/local/bin/envoy -c /etc/envoy/envoy.yaml --service-cluster agricultural_vision_proxy --service-node node1 --log-level info
-    depends_on:
-      - agricultural_vision
-    restart: unless-stopped
-    networks:
-      - app-network
-    environment:
-      - TZ=Asia/Shanghai
+#  envoy:
+#    image: envoyproxy/envoy:v1.33-latest
+#    ports:
+#      - "80:10000"
+#      - "9901:9901"
+#    volumes:
+#      - ./conf/envoy/envoy.yaml:/etc/envoy/envoy.yaml:ro
+#    command: /usr/local/bin/envoy -c /etc/envoy/envoy.yaml --service-cluster agricultural_vision_proxy --service-node node1 --log-level info
+#    depends_on:
+#      - agricultural_vision
+#    restart: unless-stopped
+#    networks:
+#      - app-network
+#    environment:
+#      - TZ=Asia/Shanghai
 #    healthcheck:
 #      test: ["CMD", "curl", "-f", "http://localhost:9901/ready"]
 #      interval: 10s
@@ -262,43 +262,43 @@ services:
   # ---------------------------
   # Kafka 服务 (使用 Apache 官方镜像)
   # ---------------------------
-  kafka:
-    image: apache/kafka:latest
-    container_name: kafka
-    restart: unless-stopped
-    ports:
-      - "9092:9092"
-    environment:
-      # --- KRaft 模式配置 (Apache 官方风格) ---
-      # 格式规则：KAFKA_ + 属性名(大写，点变下划线)
-
-      KAFKA_NODE_ID: 1
-      KAFKA_PROCESS_ROLES: broker,controller
-      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
-      # 注意：这里必须填 kafka:9092，以便其他容器通过服务名访问
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
-      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
-
-      # --- 其他必要配置 ---
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
-      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
-      TZ: Asia/Shanghai
-    networks:
-      - app-network
-    healthcheck:
-      # 官方镜像的 bin 目录通常在 /opt/kafka/bin
-      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list"]
-      interval: 10s
-      timeout: 10s
-      retries: 5
-      start_period: 30s
-    volumes:
-      - kafka-data:/var/lib/kafka/data
+#  kafka:
+#    image: apache/kafka:latest
+#    container_name: kafka
+#    restart: unless-stopped
+#    ports:
+#      - "9092:9092"
+#    environment:
+#      # --- KRaft 模式配置 (Apache 官方风格) ---
+#      # 格式规则：KAFKA_ + 属性名(大写，点变下划线)
+#
+#      KAFKA_NODE_ID: 1
+#      KAFKA_PROCESS_ROLES: broker,controller
+#      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+#      # 注意：这里必须填 kafka:9092，以便其他容器通过服务名访问
+#      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+#      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+#      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+#      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+#
+#      # --- 其他必要配置 ---
+#      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+#      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+#      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+#      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+#      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+#      TZ: Asia/Shanghai
+#    networks:
+#      - app-network
+#    healthcheck:
+#      # 官方镜像的 bin 目录通常在 /opt/kafka/bin
+#      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list"]
+#      interval: 10s
+#      timeout: 10s
+#      retries: 5
+#      start_period: 30s
+#    volumes:
+#      - kafka-data:/var/lib/kafka/data
 
   # 应用实例
   agricultural_vision:
@@ -308,8 +308,6 @@ services:
       postgres:
         condition: service_healthy
       redis:
-        condition: service_healthy
-      kafka:
         condition: service_healthy
     expose:
       - "8080"  # 只在内部网络暴露端口
