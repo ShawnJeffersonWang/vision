@@ -9,6 +9,8 @@ import (
 
 	"vision/constants"
 	"vision/models/entity"
+
+	"gorm.io/gorm/clause"
 )
 
 // 创建帖子
@@ -184,5 +186,91 @@ func GetPostIDs(p *request.ListRequest) (ids []string, total int64, err error) {
 		ids[i] = strconv.FormatInt(v, 10)
 	}
 
+	return
+}
+
+// GetCommunityPostIDs 根据社区ID查询帖子ID列表
+func GetCommunityPostIDs(p *request.ListRequest, communityID int64) (ids []string, total int64, err error) {
+	// 1. 建立查询模型
+	db := postgres.DB.Model(&entity.Post{}).Where("community_id = ?", communityID)
+
+	// 2. 查询总数
+	if err = db.Count(&total).Error; err != nil {
+		return
+	}
+	if total == 0 {
+		return
+	}
+
+	// 3. 排序 (去掉 score，改用 created_at)
+	db = db.Order("created_at DESC")
+
+	// 4. 分页取 ID
+	offset := (p.Page - 1) * p.Size
+	var intIDs []int64
+	err = db.Limit(int(p.Size)).Offset(int(offset)).Pluck("id", &intIDs).Error
+	if err != nil {
+		return
+	}
+
+	// 5. 转换 ID 类型
+	ids = make([]string, len(intIDs))
+	for i, v := range intIDs {
+		ids[i] = strconv.FormatInt(v, 10)
+	}
+	return
+}
+
+func SaveVote(userID int64, postID int64, direction int8) error {
+	// 如果 direction 为 0，通常表示取消投票，我们可以选择删除记录或者标记为0
+	// 这里采用物理删除，保持表数据量较小（或者你可以选择软删除）
+	if direction == 0 {
+		return postgres.DB.Where("user_id = ? AND post_id = ?", userID, postID).Delete(&entity.PostVote{}).Error
+	}
+
+	// 如果是 1 或 -1，则执行 Upsert (有则更新，无则插入)
+	vote := entity.PostVote{
+		UserID:    userID,
+		PostID:    postID,
+		Direction: direction,
+	}
+
+	// 使用 GORM 的 Clauses 进行 Upsert
+	// 当 user_id + post_id 冲突时，更新 direction 和 updated_at
+	return postgres.DB.Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "user_id"}, {Name: "post_id"}},
+		DoUpdates: clause.AssignmentColumns([]string{"direction", "updated_at"}),
+	}).Create(&vote).Error
+}
+
+// GetUserLikedPostIDs 获取用户点赞的帖子ID列表 (Direction = 1)
+func GetUserLikedPostIDs(p *request.ListRequest, userID int64) (ids []string, total int64, err error) {
+	db := postgres.DB.Model(&entity.PostVote{}).
+		Where("user_id = ? AND direction = ?", userID, 1) // 只查点赞的(direction=1)
+
+	// 1. 统计总数
+	if err = db.Count(&total).Error; err != nil {
+		return
+	}
+	if total == 0 {
+		return
+	}
+
+	// 2. 排序 (按最后更新时间倒序，即最近点赞的在前)
+	db = db.Order("updated_at DESC")
+
+	// 3. 分页取 PostID
+	offset := (p.Page - 1) * p.Size
+	var intIDs []int64
+	err = db.Limit(int(p.Size)).Offset(int(offset)).Pluck("post_id", &intIDs).Error
+	if err != nil {
+		return
+	}
+
+	// 4. 格式转换
+	ids = make([]string, len(intIDs))
+	for i, v := range intIDs {
+		ids[i] = strconv.FormatInt(v, 10)
+	}
 	return
 }

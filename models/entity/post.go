@@ -1,5 +1,7 @@
 package entity
 
+import "gorm.io/gorm"
+
 // 帖子
 type Post struct {
 	BaseModel
@@ -19,4 +21,12 @@ type Post struct {
 
 	// 记录收藏用户（多对多）
 	CollectedBy []*User `gorm:"many2many:user_likes_comments;"`
+}
+
+// PostVote 记录用户对帖子的投票状态
+type PostVote struct {
+	gorm.Model
+	UserID    int64 `gorm:"column:user_id;not null;uniqueIndex:idx_user_post"` // 联合唯一索引，防止重复投票
+	PostID    int64 `gorm:"column:post_id;not null;uniqueIndex:idx_user_post"`
+	Direction int8  `gorm:"column:direction;not null"` // 1:赞, -1:踩, 0:取消
 }

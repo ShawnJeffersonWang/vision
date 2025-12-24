@@ -355,25 +355,25 @@ func GetPostList(p *request.ListRequest, userID int64) (postListResponse *respon
 }
 
 // 查询该社区下的帖子列表，并按指定方式排序
-func GetCommunityPostList(listRequest *request.ListRequest, communityID int64, userID int64) (postListResponse *response.PostListResponse, err error) {
-	postListResponse = &response.PostListResponse{
-		Posts: []*response.PostResponse{},
-	}
-
-	//从redis中，根据指定的排序方式和查询数量，查询符合条件的分页后的id列表
-	ids, total, err := redis.GetCommunityPostIDsInOrder(listRequest, communityID)
-	if err != nil {
-		return
-	}
-	postListResponse.Total = total
-	if len(ids) == 0 {
-		return
-	}
-
-	// 根据id列表查询帖子列表，并封装响应数据
-	postListResponse.Posts, err = GetPostListByIDs(ids, userID)
-	return
-}
+//func GetCommunityPostList(listRequest *request.ListRequest, communityID int64, userID int64) (postListResponse *response.PostListResponse, err error) {
+//	postListResponse = &response.PostListResponse{
+//		Posts: []*response.PostResponse{},
+//	}
+//
+//	//从redis中，根据指定的排序方式和查询数量，查询符合条件的分页后的id列表
+//	ids, total, err := redis.GetCommunityPostIDsInOrder(listRequest, communityID)
+//	if err != nil {
+//		return
+//	}
+//	postListResponse.Total = total
+//	if len(ids) == 0 {
+//		return
+//	}
+//
+//	// 根据id列表查询帖子列表，并封装响应数据
+//	postListResponse.Posts, err = GetPostListByIDs(ids, userID)
+//	return
+//}
 
 // 获取用户发布的帖子列表
 func GetUserPostList(userID int64, listRequest *request.ListRequest) (postListResponse *response.PostListResponse, err error) {
@@ -403,13 +403,34 @@ func GetUserPostList(userID int64, listRequest *request.ListRequest) (postListRe
 }
 
 // 获取用户点赞的帖子列表
+//func GetUserLikedPostList(userID int64, listRequest *request.ListRequest) (postListResponse *response.PostListResponse, err error) {
+//	postListResponse = &response.PostListResponse{
+//		Posts: []*response.PostResponse{},
+//	}
+//
+//	// 从redis中查询用户点赞的帖子id列表
+//	ids, total, err := redis.GetUserLikeIDsInOrder(userID, listRequest)
+//	if err != nil {
+//		return
+//	}
+//	postListResponse.Total = total
+//	if len(ids) == 0 {
+//		return
+//	}
+//
+//	// 根据id列表查询帖子列表，并封装响应数据
+//	postListResponse.Posts, err = GetPostListByIDs(ids, userID)
+//	return
+//}
+
+// GetUserLikedPostList 获取用户点赞列表 (修复后：查MySQL)
 func GetUserLikedPostList(userID int64, listRequest *request.ListRequest) (postListResponse *response.PostListResponse, err error) {
 	postListResponse = &response.PostListResponse{
 		Posts: []*response.PostResponse{},
 	}
 
-	// 从redis中查询用户点赞的帖子id列表
-	ids, total, err := redis.GetUserLikeIDsInOrder(userID, listRequest)
+	// 【修改点】调用 DAO 层查询数据库中的 PostVote 表
+	ids, total, err := dao.GetUserLikedPostIDs(listRequest, userID)
 	if err != nil {
 		return
 	}
@@ -418,7 +439,26 @@ func GetUserLikedPostList(userID int64, listRequest *request.ListRequest) (postL
 		return
 	}
 
-	// 根据id列表查询帖子列表，并封装响应数据
+	// 根据id列表查询帖子详情
+	postListResponse.Posts, err = GetPostListByIDs(ids, userID)
+	return
+}
+
+// GetCommunityPostList 保持之前的修复逻辑 (查MySQL)
+func GetCommunityPostList(listRequest *request.ListRequest, communityID int64, userID int64) (postListResponse *response.PostListResponse, err error) {
+	postListResponse = &response.PostListResponse{
+		Posts: []*response.PostResponse{},
+	}
+
+	ids, total, err := dao.GetCommunityPostIDs(listRequest, communityID)
+	if err != nil {
+		return
+	}
+	postListResponse.Total = total
+	if len(ids) == 0 {
+		return
+	}
+
 	postListResponse.Posts, err = GetPostListByIDs(ids, userID)
 	return
 }
