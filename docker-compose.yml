@@ -15,6 +15,8 @@ services:
       - app-network
     environment:
       - TZ=Asia/Shanghai  # 设置时区
+    volumes:
+      - redis-data:/data
   # ---------------------------
   # Dragonfly 服务（缓存）
   # ---------------------------
@@ -368,6 +370,7 @@ networks:
 
 volumes:
   postgres-data:
+  redis-data:
   mysql-data:
   kafka-data:
     driver: local
