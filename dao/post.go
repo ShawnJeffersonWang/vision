@@ -2,8 +2,10 @@ package dao
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"vision/dao/postgres"
+	"vision/models/request"
 
 	"vision/constants"
 	"vision/models/entity"
@@ -143,4 +145,50 @@ func GetPostListByUserID(userID, page, size int64) ([]*entity.Post, int64, error
 		return nil, 0, result.Error
 	}
 	return posts, total, nil
+}
+
+// GetPostIDs 根据请求参数查询符合条件的 ID 列表
+func GetPostIDs(p *request.ListRequest) (ids []string, total int64, err error) {
+	// 假设全局DB对象为 global.DB
+	db := postgres.DB.Model(&entity.Post{}) // 对应你的 Post 模型
+
+	// 1. 如果有筛选条件（如分区ID），在这里添加
+	// if p.CommunityID != 0 {
+	//     db = db.Where("community_id = ?", p.CommunityID)
+	// }
+
+	// 2. 查询总数
+	if err = db.Count(&total).Error; err != nil {
+		return
+	}
+	if total == 0 {
+		return
+	}
+
+	// 3. 处理排序
+	// 注意：如果按分数排序，前提是你的数据库表里有 score 字段，或者你可以接受按其他字段代替
+	switch p.Order {
+	case constants.OrderScore:
+		// 假设数据库里没有 score 字段，通常业务会以降序时间作为兜底，或者你有 score 字段
+		db = db.Order("score DESC, created_at DESC")
+	default:
+		// 默认按创建时间倒序
+		db = db.Order("created_at DESC")
+	}
+
+	// 4. 分页并只取 ID
+	// Pluck 会自动把查询到的 id 放入 ids 切片中
+	offset := (p.Page - 1) * p.Size
+	// 注意：这里要把 int ID 转为 string，因为你的 GetPostListByIDs 接收 []string
+	// 如果数据库ID是int，GORM 的 Pluck 可能会报错类型不匹配，建议先取 []int64 再转 string
+	var intIDs []int64
+	err = db.Limit(int(p.Size)).Offset(int(offset)).Pluck("id", &intIDs).Error
+
+	// 类型转换 int64 -> string
+	ids = make([]string, len(intIDs))
+	for i, v := range intIDs {
+		ids[i] = strconv.FormatInt(v, 10)
+	}
+
+	return
 }

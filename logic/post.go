@@ -235,13 +235,34 @@ func GetPostListByIDs(ids []string, userID int64) (postResponses []*response.Pos
 }
 
 // 查询帖子列表，并按照指定方式排序
+//func GetPostList(p *request.ListRequest, userID int64) (postListResponse *response.PostListResponse, err error) {
+//	postListResponse = &response.PostListResponse{
+//		Posts: []*response.PostResponse{},
+//	}
+//
+//	// 从redis中，根据指定的排序方式和查询数量，查询符合条件的id列表
+//	ids, total, err := redis.GetPostIDsInOrder(p)
+//	if err != nil {
+//		return
+//	}
+//	postListResponse.Total = total
+//	if len(ids) == 0 {
+//		return
+//	}
+//
+//	// 根据id列表查询帖子列表，并封装响应数据
+//	postListResponse.Posts, err = GetPostListByIDs(ids, userID)
+//	return
+//}
+
+// GetPostList 只查数据库版本
 func GetPostList(p *request.ListRequest, userID int64) (postListResponse *response.PostListResponse, err error) {
 	postListResponse = &response.PostListResponse{
 		Posts: []*response.PostResponse{},
 	}
-
-	// 从redis中，根据指定的排序方式和查询数量，查询符合条件的id列表
-	ids, total, err := redis.GetPostIDsInOrder(p)
+	// 【修改点】直接去数据库查询 ID 列表和总数
+	// 替代了原有的 redis.GetPostIDsInOrder(p)
+	ids, total, err := dao.GetPostIDs(p)
 	if err != nil {
 		return
 	}
@@ -249,8 +270,7 @@ func GetPostList(p *request.ListRequest, userID int64) (postListResponse *respon
 	if len(ids) == 0 {
 		return
 	}
-
-	// 根据id列表查询帖子列表，并封装响应数据
+	// 【保持不变】继续复用原有的 GetPostListByIDs 方法
 	postListResponse.Posts, err = GetPostListByIDs(ids, userID)
 	return
 }
