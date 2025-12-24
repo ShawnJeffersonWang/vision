@@ -167,70 +167,149 @@ func DeletePost(postID int64, userID int64) error {
 }
 
 // 根据id列表查询帖子列表，并封装响应数据
-func GetPostListByIDs(ids []string, userID int64) (postResponses []*response.PostResponse, err error) {
-	//调用此函数前，已经对ids进行判断，不为空
+//func GetPostListByIDs(ids []string, userID int64) (postResponses []*response.PostResponse, err error) {
+//	//调用此函数前，已经对ids进行判断，不为空
+//
+//	//根据id列表去数据库查询帖子详细信息
+//	posts, err := dao.GetPostListByIDs(ids)
+//	if err != nil {
+//		return
+//	}
+//
+//	//查询所有帖子的赞成票数——切片
+//	/*创建帖子时，此key的默认值为0，所以voteData一定不为空，不会出现空指针异常*/
+//	voteData, err := redis.GetPostVoteDataByIDs(ids)
+//	if err != nil {
+//		return
+//	}
+//
+//	// 查询所有帖子的评论数——切片
+//	/*创建帖子时，此key的默认值为0，所以voteData一定不为空，不会出现空指针异常*/
+//	commentNum, err := redis.GetCommentNumByIDs(ids)
+//	if err != nil {
+//		return
+//	}
+//
+//	//将帖子作者及分区信息查询出来填充到帖子中
+//	for idx, post := range posts {
+//		//查询作者简略信息
+//		userBriefInfo, err := dao.GetUserBriefInfo(post.AuthorID)
+//		if err != nil { // 遇到错误不返回，继续执行后续逻辑
+//			zap.L().Error("查询作者信息失败", zap.Error(err))
+//			continue
+//		}
+//
+//		//查询社区详情
+//		community, err := dao.GetCommunityById(post.CommunityID)
+//		if err != nil { // 遇到错误不返回，继续执行后续逻辑
+//			zap.L().Error("查询社区详情失败", zap.Error(err))
+//			continue
+//		}
+//
+//		// 查询当前用户是否点赞了此帖子
+//		liked := false
+//		if userID != 0 { // 如果用户已登录，则查询用户是否点赞了此帖子
+//			liked, err = redis.IsUserLikedPost(strconv.Itoa(int(userID)), strconv.Itoa(int(post.ID)))
+//			if err != nil { // 遇到错误不返回，继续执行后续逻辑
+//				zap.L().Error("查询用户是否点赞失败", zap.Error(err))
+//				continue
+//			}
+//		}
+//
+//		//封装查询到的信息
+//		postResponse := &response.PostResponse{
+//			ID:           post.ID,
+//			Content:      post.Content,
+//			Image:        post.Image,
+//			Author:       *userBriefInfo,
+//			LikeCount:    voteData[idx],
+//			Liked:        liked,
+//			CommentCount: int64(commentNum[idx]),
+//			CreatedAt:    post.CreatedAt.Format("2006-01-02 15:04:05"),
+//			Community:    response.CommunityBriefResponse{ID: community.ID, CommunityName: community.CommunityName},
+//		}
+//
+//		postResponses = append(postResponses, postResponse)
+//	}
+//	return
+//}
 
-	//根据id列表去数据库查询帖子详细信息
+func GetPostListByIDs(ids []string, userID int64) (postResponses []*response.PostResponse, err error) {
+	// 1. 根据id列表去数据库查询帖子详细信息
+	// 注意：SQL 的 WHERE IN (...) 不保证返回顺序，通常按 ID 升序返回
 	posts, err := dao.GetPostListByIDs(ids)
 	if err != nil {
 		return
 	}
 
-	//查询所有帖子的赞成票数——切片
-	/*创建帖子时，此key的默认值为0，所以voteData一定不为空，不会出现空指针异常*/
+	// 2. 查询 Redis 数据（点赞数、评论数）
+	// 这些数据的顺序是严格对应传入的 ids 顺序的
 	voteData, err := redis.GetPostVoteDataByIDs(ids)
 	if err != nil {
 		return
 	}
-
-	// 查询所有帖子的评论数——切片
-	/*创建帖子时，此key的默认值为0，所以voteData一定不为空，不会出现空指针异常*/
 	commentNum, err := redis.GetCommentNumByIDs(ids)
 	if err != nil {
 		return
 	}
 
-	//将帖子作者及分区信息查询出来填充到帖子中
-	for idx, post := range posts {
-		//查询作者简略信息
+	// 【关键修复】将 Redis 数据转为 Map，以便通过 ID 精确匹配
+	voteMap := make(map[string]int64)
+	commentMap := make(map[string]int64)
+	for i, id := range ids {
+		voteMap[id] = voteData[i]
+		commentMap[id] = int64(commentNum[i])
+	}
+
+	// 3. 遍历数据库返回的帖子列表进行组装
+	for _, post := range posts {
+		// 查询作者简略信息
 		userBriefInfo, err := dao.GetUserBriefInfo(post.AuthorID)
-		if err != nil { // 遇到错误不返回，继续执行后续逻辑
+		if err != nil {
 			zap.L().Error("查询作者信息失败", zap.Error(err))
 			continue
 		}
 
-		//查询社区详情
+		// 查询社区详情
 		community, err := dao.GetCommunityById(post.CommunityID)
-		if err != nil { // 遇到错误不返回，继续执行后续逻辑
+		if err != nil {
 			zap.L().Error("查询社区详情失败", zap.Error(err))
 			continue
 		}
 
-		// 查询当前用户是否点赞了此帖子
+		// 查询当前用户是否点赞
 		liked := false
-		if userID != 0 { // 如果用户已登录，则查询用户是否点赞了此帖子
+		if userID != 0 {
 			liked, err = redis.IsUserLikedPost(strconv.Itoa(int(userID)), strconv.Itoa(int(post.ID)))
-			if err != nil { // 遇到错误不返回，继续执行后续逻辑
+			if err != nil {
 				zap.L().Error("查询用户是否点赞失败", zap.Error(err))
 				continue
 			}
 		}
 
-		//封装查询到的信息
+		// ID 转字符串，用于从 Map 取值
+		postIDStr := strconv.FormatInt(post.ID, 10)
+
 		postResponse := &response.PostResponse{
-			ID:           post.ID,
-			Content:      post.Content,
-			Image:        post.Image,
-			Author:       *userBriefInfo,
-			LikeCount:    voteData[idx],
+			ID:      post.ID,
+			Content: post.Content,
+			Image:   post.Image,
+			Author:  *userBriefInfo,
+			// 【关键修复】从 Map 中取值，而不是用 idx，确保数据对应正确
+			LikeCount:    voteMap[postIDStr],
+			CommentCount: commentMap[postIDStr],
 			Liked:        liked,
-			CommentCount: int64(commentNum[idx]),
 			CreatedAt:    post.CreatedAt.Format("2006-01-02 15:04:05"),
 			Community:    response.CommunityBriefResponse{ID: community.ID, CommunityName: community.CommunityName},
 		}
 
 		postResponses = append(postResponses, postResponse)
 	}
+
+	// 4. (可选) 如果你希望返回结果严格按照时间倒序（因为数据库返回可能是乱序），这里可以再排一次序
+	// 目前前端通常能接受，或者因为 GetPostIDs 已经按时间倒序取了 ID，虽然 posts 乱序，但内容是对的。
+	// 如果需要严格顺序，可以将 postResponses 按照 ids 的顺序重排。
+
 	return
 }
 

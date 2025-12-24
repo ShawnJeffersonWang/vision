@@ -149,10 +149,9 @@ func GetPostListByUserID(userID, page, size int64) ([]*entity.Post, int64, error
 
 // GetPostIDs 根据请求参数查询符合条件的 ID 列表
 func GetPostIDs(p *request.ListRequest) (ids []string, total int64, err error) {
-	// 假设全局DB对象为 global.DB
-	db := postgres.DB.Model(&entity.Post{}) // 对应你的 Post 模型
+	db := postgres.DB.Model(&entity.Post{})
 
-	// 1. 如果有筛选条件（如分区ID），在这里添加
+	// 1. 简单的筛选条件（如果有）
 	// if p.CommunityID != 0 {
 	//     db = db.Where("community_id = ?", p.CommunityID)
 	// }
@@ -165,26 +164,21 @@ func GetPostIDs(p *request.ListRequest) (ids []string, total int64, err error) {
 		return
 	}
 
-	// 3. 处理排序
-	// 注意：如果按分数排序，前提是你的数据库表里有 score 字段，或者你可以接受按其他字段代替
-	switch p.Order {
-	case constants.OrderScore:
-		// 假设数据库里没有 score 字段，通常业务会以降序时间作为兜底，或者你有 score 字段
-		db = db.Order("score DESC, created_at DESC")
-	default:
-		// 默认按创建时间倒序
-		db = db.Order("created_at DESC")
-	}
+	// 3. 处理排序 【关键修复点】
+	// 数据库没有 score 字段，所以无论前端传 score 还是 time，目前都只能按时间倒序
+	// 如果未来你在数据库加了 score 或 like_count 字段，可以在这里改回来
+	db = db.Order("created_at DESC")
 
 	// 4. 分页并只取 ID
-	// Pluck 会自动把查询到的 id 放入 ids 切片中
 	offset := (p.Page - 1) * p.Size
-	// 注意：这里要把 int ID 转为 string，因为你的 GetPostListByIDs 接收 []string
-	// 如果数据库ID是int，GORM 的 Pluck 可能会报错类型不匹配，建议先取 []int64 再转 string
 	var intIDs []int64
+	// Pluck 提取 ID
 	err = db.Limit(int(p.Size)).Offset(int(offset)).Pluck("id", &intIDs).Error
+	if err != nil {
+		return
+	}
 
-	// 类型转换 int64 -> string
+	// 5. 类型转换 int64 -> string
 	ids = make([]string, len(intIDs))
 	for i, v := range intIDs {
 		ids[i] = strconv.FormatInt(v, 10)
