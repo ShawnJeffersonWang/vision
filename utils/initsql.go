@@ -18,6 +18,7 @@ func InitSqlTable() (err error) {
 		&entity.Community{},
 		&entity.Comment{},
 		&entity.LoginHistory{},
+		&entity.PostVote{},
 	)
 	return
 }
