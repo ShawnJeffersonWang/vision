@@ -33,7 +33,7 @@ func main() {
 		log.Fatal("Failed to setup app:", err)
 	}
 	// 启动 Kafka 消费者
-	go startKafkaConsumer(ctx)
+	//go startKafkaConsumer(ctx)
 	// 启动服务器
 	runServer(ctx)
 }
